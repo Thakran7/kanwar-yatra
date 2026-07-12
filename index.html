@@ -157,14 +157,11 @@
     <script>
         // ⚠️ APNE FIREBASE CONFIG DETAILS YAHAN COPI-PASTE KAREIN
         var firebaseConfig = {
-            apiKey: "AIzaSyB2OQnBbkwzBABYdtXUo5rJtnN68L_GOzA",
-            authDomain: "kanwar-yatra-2026.firebaseapp.com",
-            databaseURL: "https://kanwar-yatra-2026-default-rtdb.firebaseio.com",
-            projectId: "kanwar-yatra-2026",
-            storageBucket: "kanwar-yatra-2026.firebasestorage.app",
-            messagingSenderId: "1022221065080",
-            appId: "1:1022221065080:web:81fca9047005454d84068d"
-
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "https://YOUR_DATABASE_NAME.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -303,4 +300,78 @@
 
         function filterData() { renderMasterTable(); }
         function openModal() {
-            document.getElementById('samitiForm').reset(); d
+            document.getElementById('samitiForm').reset(); document.getElementById('edit-id').value = '';
+            document.getElementById('modal-title').innerText = "Register New Samiti";
+            document.getElementById('samitiModal').style.display = 'block'; liveFinanceCalc();
+        }
+        function closeModal() { document.getElementById('samitiModal').style.display = 'none'; }
+
+        function editSamiti(key) {
+            var s = samitiList.find(function(item) { return item.fbKey === key; });
+            if(!s) return;
+            document.getElementById('edit-id').value = s.fbKey;
+            document.getElementById('form-name').value = s.name;
+            document.getElementById('form-reg').value = s.reg || '';
+            document.getElementById('form-pres').value = s.pres;
+            document.getElementById('form-mobile').value = s.mobile;
+            document.getElementById('form-address').value = s.address || '';
+            document.getElementById('noc-police').value = s.noc_police || 'No';
+            document.getElementById('noc-traffic').value = s.noc_traffic || 'No';
+            document.getElementById('noc-mcd').value = s.noc_mcd || 'No';
+            document.getElementById('noc-dda').value = s.noc_dda || 'No';
+            document.getElementById('noc-fire').value = s.noc_fire || 'No';
+            document.getElementById('noc-electric').value = s.noc_electric || 'No';
+            document.getElementById('form-area-size').value = s.area_size || 0;
+            document.getElementById('form-days').value = s.days || 0;
+            document.getElementById('form-sanc').value = s.sanc || 0;
+            document.getElementById('form-uc-status').value = s.uc_status || 'Pending';
+            document.getElementById('samitiModal').style.display = 'block'; liveFinanceCalc();
+        }
+
+        function saveSamiti(e) {
+            e.preventDefault();
+            if(!isAdmin) { alert("Unauthorized action!"); return; }
+            var key = document.getElementById('edit-id').value;
+            var payload = {
+                name: document.getElementById('form-name').value,
+                reg: document.getElementById('form-reg').value,
+                pres: document.getElementById('form-pres').value,
+                mobile: document.getElementById('form-mobile').value,
+                address: document.getElementById('form-address').value,
+                noc_police: document.getElementById('noc-police').value,
+                noc_traffic: document.getElementById('noc-traffic').value,
+                noc_mcd: document.getElementById('noc-mcd').value,
+                noc_dda: document.getElementById('noc-dda').value,
+                noc_fire: document.getElementById('noc-fire').value,
+                noc_electric: document.getElementById('noc-electric').value,
+                area_size: Number(document.getElementById('form-area-size').value || 0),
+                days: Number(document.getElementById('form-days').value || 0),
+                sanc: Number(document.getElementById('form-sanc').value || 0),
+                uc_status: document.getElementById('form-uc-status').value
+            };
+
+            if (key) {
+                db.child(key).set(payload);
+            } else {
+                db.push(payload);
+            }
+            closeModal();
+        }
+
+        function deleteSamiti(key) {
+            if(!isAdmin) return;
+            if(confirm("Are you sure you want to delete this record?")) {
+                db.child(key).remove();
+            }
+        }
+
+        function exportToExcel() {
+            var wsData = samitiList.map(function(s) {
+                return { "Samiti Name": s.name, "President": s.pres, "Mobile": s.mobile, "Total Sanctioned (₹)": s.sanc, "UC Status": s.uc_status }
+            });
+            var worksheet = XLSX.utils.json_to_sheet(wsData); var workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Live Report"); XLSX.writeFile(workbook, "Live_Kanwar_Report.xlsx");
+        }
+    </script>
+</body>
+</html>
