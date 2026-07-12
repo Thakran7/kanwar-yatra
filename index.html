@@ -3,159 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delhi Kanwar Yatra Secure Live Portal</title>
-    <!-- SheetJS for Excel -->
+    <title>District Kanwar Samiti Management Portal</title>
+    <!-- SheetJS & Firebase -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase core & Database Libraries -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; color: #333; }
-        .navbar { background-color: #ea580c; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .navbar h1 { margin: 0; font-size: 20px; }
-        .btn { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
-        .btn-green { background-color: #16a34a; color: white; }
-        .btn-blue { background-color: #2563eb; color: white; padding: 6px 12px; font-size: 12px; border-radius: 4px; }
-        .btn-excel { background-color: #059669; color: white; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; color: #333; }
+        .navbar { background-color: #d97706; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 22px; font-weight: 600; }
+        .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-green { background-color: #059669; color: white; }
+        .btn-blue { background-color: #2563eb; color: white; }
+        .btn-orange { background-color: #ea580c; color: white; padding: 12px 24px; font-size: 15px; margin: 10px 0; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-excel { background-color: #15803d; color: white; }
+        .btn-pdf { background-color: #b91c1c; color: white; }
+        .btn-action { padding: 4px 8px; font-size: 11px; margin: 2px; border-radius: 3px; }
+        .btn-purple { background-color: #7c3aed; color: white; }
         
-        .container { max-width: 1300px; margin: 20px auto; padding: 0 15px; }
-        .grid-5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #ccc; }
-        .card-total { border-left-color: #2563eb; }
-        .card-noc { border-left-color: #16a34a; }
-        .card-grant { border-left-color: #ea580c; }
-        .card p { margin: 0; color: #666; font-size: 11px; text-transform: uppercase; font-weight: bold; }
-        .card h2 { margin: 5px 0 0 0; font-size: 22px; }
-
-        .view-switcher { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
-        .tab-btn { padding: 10px 20px; background: #e5e7eb; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; color: #4b5563; }
-        .tab-btn.active { background: #ea580c; color: white; }
-
-        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1000px; }
-        th { background-color: #f9fafb; padding: 12px; font-size: 12px; color: #666; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; vertical-align: middle; }
-        tr:hover { background-color: #f9fafb; }
+        .container { max-width: 1600px; margin: 25px auto; padding: 0 20px; }
         
-        .noc-badge { display: inline-block; padding: 2px 6px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-right: 3px; margin-bottom: 3px; }
-        .noc-yes { background-color: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
-        .noc-no { background-color: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid #ccc; text-align: center; }
+        .card-total { border-top-color: #2563eb; }
+        .card-approved { border-top-color: #16a34a; }
+        .card-pending { border-top-color: #d97706; }
+        .card-rejected { border-top-color: #dc2626; }
+        .card-finance { border-top-color: #854d0e; background-color: #fef8e6; }
+        .card p { margin: 0; color: #6b7280; font-size: 12px; text-transform: uppercase; font-weight: bold; }
+        .card h2 { margin: 8px 0 0 0; font-size: 22px; color: #1f2937; }
 
+        .controls-panel { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .search-input, .filter-select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; min-width: 220px; }
+        .search-input { flex-grow: 1; }
+        .report-buttons { display: flex; gap: 10px; margin-left: auto; }
+
+        .table-section-wrapper { display: none; margin-top: 15px; }
+        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 2000px; font-size: 12px; }
+        th { background-color: #f3f4f6; padding: 12px 8px; color: #374151; border-bottom: 2px solid #e5e7eb; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+        td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; white-space: nowrap; }
+        tr:hover { background-color: #f8fafc; }
+        
+        .admin-box { display: flex; align-items: center; gap: 10px; background: #fef3c7; padding: 6px 12px; border-radius: 4px; border: 1px dashed #d97706; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: white; max-width: 850px; margin: 30px auto; padding: 25px; border-radius: 8px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
-        .form-section { border-bottom: 1px solid #fed7aa; padding-bottom: 5px; margin: 15px 0 10px 0; font-weight: bold; color: #ea580c; font-size: 13px; text-transform: uppercase; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .modal-content { background: white; max-width: 1000px; margin: 30px auto; padding: 25px; border-radius: 8px; }
+        .form-section { border-bottom: 2px solid #ea580c; padding-bottom: 4px; margin: 20px 0 12px 0; font-weight: bold; color: #ea580c; font-size: 14px; text-transform: uppercase; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 12px; margin-bottom: 4px; color: #555; font-weight: bold; }
-        .form-group input, .form-group select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .form-group label { font-size: 12px; margin-bottom: 4px; color: #4b5563; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         .full-width { grid-column: 1 / -1; }
-        .calc-highlight { background-color: #f0fdf4; border: 1px dashed #16a34a; padding: 8px; border-radius: 4px; margin-top: 10px; font-size: 13px; font-weight: bold; color: #15803d; }
         
-        .admin-box { display: flex; align-items: center; gap: 10px; background: #fff3e0; padding: 5px 10px; border-radius: 5px; border: 1px dashed #f57c00; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; }
+        .checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+        
+        .dept-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f3f4f6; border-radius: 4px; margin-bottom: 6px; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <h1>Delhi Kanwar Yatra Secure Dashboard</h1>
-        <!-- Secure Admin Entry Control Box -->
+        <h1>Kanwar Samiti District Portal</h1>
         <div class="admin-box">
-            <label style="color:#e65100; font-weight:bold; font-size:13px; cursor:pointer;">
-                <input type="checkbox" id="admin-mode" onchange="toggleAdminMode()"> Admin Control (Data Entry)
+            <label style="cursor:pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; color: #9a3412;">
+                <input type="checkbox" id="admin-mode" onchange="toggleAdminMode()"> 🔐 Admin Access
             </label>
-            <button id="add-btn" onclick="openModal()" class="btn btn-green" style="display:none;">+ Register New Samiti</button>
+            <button id="manage-noc-btn" onclick="openNocModal()" class="btn btn-purple" style="display:none;">⚙️ Manage NOC Depts</button>
+            <button id="add-btn" onclick="openModal()" class="btn btn-green" style="display:none;">➕ Add New Samiti</button>
         </div>
     </div>
 
     <div class="container">
-        <!-- DASHBOARD CARDS (Sabko dikhenge) -->
-        <div class="grid-5">
-            <div class="card card-total"><p>Total Registered Samiti</p><h2 id="dash-total">0</h2></div>
-            <div class="card card-noc"><p>All NOC Clear Samitis</p><h2 id="dash-noc-clear" style="color: #16a34a;">0</h2></div>
-            <div class="card card-grant"><p>Total Sanctioned Amount</p><h2 id="dash-total-sanc" style="color: #ea580c;">₹0</h2></div>
-            <div class="card card-grant" style="border-left-color: #2563eb;"><p>Total 50% Advance Paid</p><h2 id="dash-total-adv" style="color: #2563eb;">₹0</h2></div>
+        <!-- Live Count Dashboard -->
+        <div class="grid-4">
+            <div class="card card-total"><p>Total Samiti Count</p><h2 id="dash-total">0</h2></div>
+            <div class="card card-approved"><p>Approved Applications</p><h2 id="dash-approved" style="color: #16a34a;">0</h2></div>
+            <div class="card card-pending"><p>Pending Review</p><h2 id="dash-pending" style="color: #d97706;">0</h2></div>
+            <div class="card card-rejected"><p>Rejected</p><h2 id="dash-rejected" style="color: #dc2626;">0</h2></div>
         </div>
 
-        <!-- SEARCH BAR (Sabko dikhega) -->
-        <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <input type="text" id="search-box" oninput="filterData()" placeholder="Search by Samiti Name / President..." style="padding: 8px; width: 350px; border: 1px solid #ccc; border-radius: 5px;">
-            <button onclick="exportToExcel()" class="btn btn-excel">📊 Export Report to Excel</button>
+        <!-- Financial Summary Dashboard -->
+        <div class="grid-4" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 25px;">
+            <div class="card card-finance"><p>💰 Total GIA Amount</p><h2 id="fin-total-gia" style="color: #1e3a8a;">₹0</h2></div>
+            <div class="card card-finance"><p>💵 Total Advance Released (50%)</p><h2 id="fin-total-adv" style="color: #b45309;">₹0</h2></div>
+            <div class="card card-finance"><p>💸 Total Remaining Payment</p><h2 id="fin-total-rem" style="color: #047857;">₹0</h2></div>
         </div>
 
-        <!-- TABS NAVIGATION (Sabko dikhenge) -->
-        <div class="view-switcher">
-            <button id="tab-basic" class="tab-btn active" onclick="switchView('basic')">📋 1. Samiti Registration Details</button>
-            <button id="tab-noc" class="tab-btn" onclick="switchView('noc')">🛡️ 2. Department NOC Status</button>
-            <button id="tab-finance" class="tab-btn" onclick="switchView('finance')">💰 3. Area, Days & Payment Report (UC)</button>
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="toggleTableSection()" class="btn btn-orange" id="trigger-view-btn">📁 View Samiti Records List (Click to Open)</button>
         </div>
 
-        <!-- MASTER DATA TABLE (Sabko dikhega) -->
-        <div class="table-container">
-            <table id="master-table">
-                <!-- Content gets filled live from Firebase -->
-            </table>
+        <div class="table-section-wrapper" id="table-section-wrapper">
+            <!-- Filters Panel -->
+            <div class="controls-panel">
+                <input type="text" id="search-name" oninput="filterData()" placeholder="🔍 Search by Samiti Name, App ID, File No..." class="search-input">
+                <select id="filter-area" onchange="filterData()" class="filter-select">
+                    <option value="">🔍 Filter by Sub Division (All)</option>
+                    <option value="Rohini">Rohini</option>
+                    <option value="Nangloi Jat">Nangloi Jat</option>
+                    <option value="Kirari">Kirari</option>
+                </select>
+                <div class="report-buttons">
+                    <button onclick="exportToExcel()" class="btn btn-excel">📊 Export Excel</button>
+                    <button onclick="window.print()" class="btn btn-pdf">🖨️ Print / PDF</button>
+                </div>
+            </div>
+
+            <!-- Master Table -->
+            <div class="table-container">
+                <table id="master-table">
+                    <thead>
+                        <tr>
+                            <th>S. No.</th>
+                            <th>NW File Sl. No.</th>
+                            <th>Sub Division</th>
+                            <th>Application ID</th>
+                            <th>Samiti Name</th>
+                            <th>Location of Camp</th>
+                            <th>Camp Area (Sq. Ft.)</th>
+                            <th>Camp Days</th>
+                            <th>GIA Eligibility</th>
+                            <th>Advance 50% Released</th>
+                            <th>Proposed Remaining Payment</th>
+                            <th>Obtained NOCs</th>
+                            <th>Bank Name</th>
+                            <th>Account Number</th>
+                            <th>IFSC Code</th>
+                            <th>Remarks</th>
+                            <th class="admin-action-col" style="display:none; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- ENTRY & UPDATE MODAL -->
+    <!-- Samiti Sheet Data Modal -->
     <div id="samitiModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title" style="margin:0; color:#ea580c;">Kanwar Samiti Registration Form</h3>
-                <span onclick="closeModal()" style="font-size:24px; cursor:pointer; font-weight:bold;">&times;</span>
-            </div>
+            <h3 id="modal-title" style="margin:0; color:#ea580c;">Samiti Information Record Sheet</h3>
             <form id="samitiForm" onsubmit="saveSamiti(event)">
                 <input type="hidden" id="edit-id">
                 
-                <div class="form-section">1. Registration & Contact Details</div>
+                <div class="form-section">1. File & Authority Information</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>Samiti Name*</label><input type="text" id="form-name" required></div>
-                    <div class="form-group"><label>Registration No./Date</label><input type="text" id="form-reg"></div>
-                    <div class="form-group"><label>President Name*</label><input type="text" id="form-pres" required></div>
-                    <div class="form-group"><label>Mobile Number*</label><input type="text" id="form-mobile" required maxLength="10"></div>
-                    <div class="form-group full-width"><label>Camp/Sthalan Address</label><input type="text" id="form-address"></div>
-                </div>
-
-                <div class="form-section">2. Required Department NOC Status</div>
-                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
-                    <div class="form-group"><label>Delhi Police</label><select id="noc-police"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
-                    <div class="form-group"><label>Traffic Police</label><select id="noc-traffic"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
-                    <div class="form-group"><label>MCD</label><select id="noc-mcd"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
-                    <div class="form-group"><label>DDA</label><select id="noc-dda"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
-                    <div class="form-group"><label>Fire Dept</label><select id="noc-fire"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
-                    <div class="form-group"><label>Electricity/BSES</label><select id="noc-electric"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
-                </div>
-
-                <div class="form-section">3. Area, Days & Financial Sanctions</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Camp Area Size (Sq.Ft)</label><input type="number" id="form-area-size" value="0" oninput="liveFinanceCalc()"></div>
-                    <div class="form-group"><label>Total Days of Camp</label><input type="number" id="form-days" value="0" oninput="liveFinanceCalc()"></div>
-                    <div class="form-group"><label>Total Amount Sanctioned (₹)</label><input type="number" id="form-sanc" value="0" oninput="liveFinanceCalc()"></div>
-                    <div class="form-group"><label>UC (Utilization Certificate)</label>
-                        <select id="form-uc-status" onchange="liveFinanceCalc()">
-                            <option value="Pending">❌ Not Submitted</option>
-                            <option value="Submitted">✔️ Submitted (Full OK)</option>
-                            <option value="Partial">⚠️ Discrepancy / Deduct Amount</option>
+                    <div class="form-group"><label>NW File Sl. No. (Number)*</label><input type="number" id="form-nw-file" required></div>
+                    <div class="form-group"><label>Sub Division*</label>
+                        <select id="form-subdiv" required>
+                            <option value="Rohini">Rohini</option>
+                            <option value="Nangloi Jat">Nangloi Jat</option>
+                            <option value="Kirari">Kirari</option>
                         </select>
+                    </div>
+                    <div class="form-group"><label>Application ID*</label><input type="text" id="form-appid" required></div>
+                    <div class="form-group"><label>Application Status (For Analytics)*</label>
+                        <select id="form-status"><option value="Pending">Pending</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option></select>
                     </div>
                 </div>
 
-                <div class="calc-highlight" id="modal-calc-box">
-                    Calculated Breakdown: Advance (50%): ₹0 | Balance Payable: ₹0
+                <div class="form-section">2. Samiti & Camp Ground Specifications</div>
+                <div class="form-grid">
+                    <div class="form-group full-width"><label>Samiti Name*</label><input type="text" id="form-name" required></div>
+                    <div class="form-group full-width"><label>Location of Camp*</label><input type="text" id="form-location" required></div>
+                    <div class="form-group"><label>Camp Area (Sq. Ft.)</label><input type="number" id="form-area-sqft" value="0"></div>
+                    <div class="form-group"><label>Camp Days</label><input type="number" id="form-days" value="0"></div>
                 </div>
 
-                <div style="text-align: right; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                <div class="form-section">3. Dynamic NOC Clearances Checkbox Matrix</div>
+                <div class="full-width checkbox-group" id="form-noc-checkboxes">
+                    <!-- Checkboxes inject dynamically here -->
+                </div>
+
+                <div class="form-section">4. Grants & Financial Breakdown</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>GIA Eligibility (₹ Amount)</label><input type="number" id="form-gia" value="0" oninput="autoCalculateFinance()"></div>
+                    <div class="form-group"><label>Advance 50% Released (₹ Amount)</label><input type="number" id="form-adv" value="0"></div>
+                    <div class="form-group"><label>Proposed Remaining Payment (₹ Amount)</label><input type="number" id="form-rem" value="0"></div>
+                </div>
+
+                <div class="form-section">5. Bank Remittance Management</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Bank Name</label><input type="text" id="form-bank-name"></div>
+                    <div class="form-group"><label>Account Number</label><input type="text" id="form-bank-acc"></div>
+                    <div class="form-group"><label>IFSC Code</label><input type="text" id="form-bank-ifsc"></div>
+                    <div class="form-group"><label>MICR Code</label><input type="text" id="form-bank-micr"></div>
+                </div>
+                
+                <div class="form-section">6. Validation Note</div>
+                <div class="form-group full-width"><label>Remarks</label><textarea id="form-remarks" rows="2"></textarea></div>
+
+                <div style="text-align: right; margin-top: 20px;">
                     <button type="button" onclick="closeModal()" class="btn" style="background:#ccc; color:#333;">Cancel</button>
-                    <button type="submit" id="save-btn" class="btn btn-green">Save/Update Record</button>
+                    <button type="submit" class="btn btn-green">💾 Save Record</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- NOC Departments Config Master Modal -->
+    <div id="nocModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 style="margin:0 0 15px 0; color:#7c3aed;">⚙️ Manage NOC Departments</h3>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="new-dept-name" placeholder="Enter Department Name (e.g. Fire, Police)" style="flex-grow:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <button onclick="addNocDepartment()" class="btn btn-green">Add</button>
+            </div>
+            <div id="noc-dept-list" style="max-height: 300px; overflow-y:auto;">
+                <!-- Departments List injected here -->
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" onclick="closeNocModal()" class="btn" style="background:#ccc; color:#333;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // ⚠️ APNE FIREBASE CONFIG DETAILS YAHAN COPI-PASTE KAREIN
+        // ⚠️ APNI GOOGLE FIREBASE CONFIG DETAILS YAHA DALEIN
         var firebaseConfig = {
             apiKey: "AIzaSyB2OQnBbkwzBABYdtXUo5rJtnN68L_GOzA",
   authDomain: "kanwar-yatra-2026.firebaseapp.com",
@@ -167,15 +233,23 @@
         };
         
         firebase.initializeApp(firebaseConfig);
-        var db = firebase.database().ref("kanwar_samiti_master");
+        var db = firebase.database().ref("district_kanwar_master_v3");
+        var nocDb = firebase.database().ref("noc_departments");
 
-        // 🛡️ SECRET MASTER PASSWORD (Aap ise change kar sakte hain)
-        var MASTER_PASSWORD = "delhi2026"; 
-
+        var MASTER_PASSWORD = "delhi2026";
         var samitiList = [];
-        var currentView = 'basic';
+        var nocDepartments = {};
         var isAdmin = false;
 
+        // Realtime sync NOC Departments
+        nocDb.on("value", function(snapshot) {
+            nocDepartments = snapshot.val() || {};
+            buildNocCheckboxes();
+            renderNocDeptList();
+            renderMasterTable();
+        });
+
+        // Realtime sync Samiti List
         db.on("value", function(snapshot) {
             var data = snapshot.val();
             samitiList = [];
@@ -186,193 +260,291 @@
                     samitiList.push(obj);
                 }
             }
-            calculateDashboard();
+            calculateDashboardAndFinance(samitiList);
             renderMasterTable();
         });
 
-        // 🔐 Password Verification Logic
+        function toggleTableSection() {
+            var wrapper = document.getElementById('table-section-wrapper');
+            var btn = document.getElementById('trigger-view-btn');
+            if(wrapper.style.display === 'none' || wrapper.style.display === '') {
+                wrapper.style.display = 'block';
+                btn.innerText = "📁 Hide Samiti Records List";
+            } else {
+                wrapper.style.display = 'none';
+                btn.innerText = "📁 View Samiti Records List (Click to Open)";
+            }
+        }
+
         function toggleAdminMode() {
             var checkbox = document.getElementById("admin-mode");
-            
             if (checkbox.checked) {
-                var enteredPassword = prompt("Please enter the Secret Admin Password to unlock Data Entry:");
-                if (enteredPassword === MASTER_PASSWORD) {
+                var enteredPass = prompt("Enter Secret Admin Password:");
+                if (enteredPass === MASTER_PASSWORD) {
                     isAdmin = true;
-                    alert("Access Granted! Admin controls are unlocked.");
                     document.getElementById("add-btn").style.display = "inline-block";
+                    document.getElementById("manage-noc-btn").style.display = "inline-block";
                 } else {
-                    isAdmin = false;
-                    checkbox.checked = false;
-                    alert("Wrong Password! Access Denied.");
+                    isAdmin = false; checkbox.checked = false;
                     document.getElementById("add-btn").style.display = "none";
+                    document.getElementById("manage-noc-btn").style.display = "none";
+                    alert("Invalid Password.");
                 }
             } else {
                 isAdmin = false;
                 document.getElementById("add-btn").style.display = "none";
-                alert("Admin Control Closed. Switched to View-Only mode.");
+                document.getElementById("manage-noc-btn").style.display = "none";
             }
             renderMasterTable();
         }
 
-        function switchView(viewName) {
-            currentView = viewName;
-            document.getElementById('tab-basic').classList.remove('active');
-            document.getElementById('tab-noc').classList.remove('active');
-            document.getElementById('tab-finance').classList.remove('active');
-            document.getElementById('tab-' + viewName).classList.add('active');
-            renderMasterTable();
-        }
-
-        function calculateDashboard() {
-            var total = samitiList.length;
-            var nocClearCount = 0; var totalSanc = 0; var totalAdv = 0;
-
-            for(var i=0; i<samitiList.length; i++) {
-                var s = samitiList[i];
-                if(s.noc_police==='Yes' && s.noc_traffic==='Yes' && s.noc_mcd==='Yes' && s.noc_dda==='Yes' && s.noc_fire==='Yes' && s.noc_electric==='Yes') {
-                    nocClearCount++;
-                }
-                var sancAmt = Number(s.sanc || 0);
-                totalSanc += sancAmt;
-                totalAdv += (sancAmt * 0.50);
-            }
+        // Live Dashboard calculations
+        function calculateDashboardAndFinance(activeList) {
+            var total = activeList.length, app = 0, pen = 0, rej = 0;
+            var sumGia = 0, sumAdv = 0, sumRem = 0;
+            activeList.forEach(function(s) {
+                if(s.status === 'Approved') app++; else if(s.status === 'Rejected') rej++; else pen++;
+                sumGia += Number(s.gia || 0); sumAdv += Number(s.adv || 0); sumRem += Number(s.rem || 0);
+            });
             document.getElementById('dash-total').innerText = total;
-            document.getElementById('dash-noc-clear').innerText = nocClearCount;
-            document.getElementById('dash-total-sanc').innerText = '₹' + totalSanc.toLocaleString('en-IN');
-            document.getElementById('dash-total-adv').innerText = '₹' + totalAdv.toLocaleString('en-IN');
+            document.getElementById('dash-approved').innerText = app;
+            document.getElementById('dash-pending').innerText = pen;
+            document.getElementById('dash-rejected').innerText = rej;
+            document.getElementById('fin-total-gia').innerText = "₹" + sumGia.toLocaleString('en-IN');
+            document.getElementById('fin-total-adv').innerText = "₹" + sumAdv.toLocaleString('en-IN');
+            document.getElementById('fin-total-rem').innerText = "₹" + sumRem.toLocaleString('en-IN');
         }
 
-        function liveFinanceCalc() {
-            var sanc = Number(document.getElementById('form-sanc').value || 0);
-            var uc = document.getElementById('form-uc-status').value;
-            var advance = sanc * 0.50; var finalPay = 0;
+        function autoCalculateFinance() {
+            var gia = Number(document.getElementById('form-gia').value || 0);
+            document.getElementById('form-adv').value = gia * 0.50;
+            document.getElementById('form-rem').value = gia * 0.50;
+        }
 
-            if(uc === 'Submitted') finalPay = sanc - advance;
-            else if(uc === 'Partial') finalPay = (sanc - advance) * 0.80;
+        // Form NOC checkbox system builder
+        function buildNocCheckboxes() {
+            var container = document.getElementById('form-noc-checkboxes');
+            if(Object.keys(nocDepartments).length === 0) {
+                container.innerHTML = '<span style="color:#6b7280; font-size:12px;">No NOC departments configured. Add them from Admin Panel.</span>';
+                return;
+            }
+            var html = '';
+            for(var id in nocDepartments) {
+                html += `<label class="checkbox-item">
+                    <input type="checkbox" name="noc_status" value="${id}"> ${nocDepartments[id].name}
+                </label>`;
+            }
+            container.innerHTML = html;
+        }
 
-            document.getElementById('modal-calc-box').innerHTML = 
-                "<b>Live Calculation:</b><br>• Advance Released: <b>₹" + advance + "</b><br>• Final Payable: <b>₹" + finalPay + "</b>";
+        // Configuration Modal Render
+        function renderNocDeptList() {
+            var container = document.getElementById('noc-dept-list');
+            var html = '';
+            for(var id in nocDepartments) {
+                html += `<div class="dept-list-item">
+                    <span><b>${nocDepartments[id].name}</b></span>
+                    <div>
+                        <button onclick="editNocDepartment('${id}', '${nocDepartments[id].name}')" class="btn btn-blue btn-action">✏️</button>
+                        <button onclick="deleteNocDepartment('${id}')" class="btn btn-action" style="background:#dc2626; color:white;">🗑️</button>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // NOC Controls Actions
+        function openNocModal() { document.getElementById('nocModal').style.display = 'block'; }
+        function closeNocModal() { document.getElementById('nocModal').style.display = 'none'; }
+
+        function addNocDepartment() {
+            var input = document.getElementById('new-dept-name');
+            var name = input.value.trim();
+            if(!name) return;
+            nocDb.push({ name: name });
+            input.value = '';
+        }
+
+        function editNocDepartment(id, oldName) {
+            var newName = prompt("Edit Department Name:", oldName);
+            if(newName && newName.trim() !== "") {
+                nocDb.child(id).update({ name: newName.trim() });
+            }
+        }
+
+        function deleteNocDepartment(id) {
+            if(confirm("Are you sure you want to remove this NOC Department permanently?")) {
+                nocDb.child(id).remove();
+            }
         }
 
         function renderMasterTable() {
-            var table = document.getElementById('master-table');
-            var searchVal = document.getElementById('search-box').value.toLowerCase();
-            
+            var tbody = document.getElementById('table-body');
+            var searchName = document.getElementById('search-name').value.toLowerCase();
+            var filterArea = document.getElementById('filter-area').value;
+
+            var actionHeaders = document.querySelectorAll('.admin-action-col');
+            actionHeaders.forEach(th => th.style.display = isAdmin ? 'table-cell' : 'none');
+
             var filtered = samitiList.filter(function(s) {
-                return s.name.toLowerCase().indexOf(searchVal) > -1 || s.pres.toLowerCase().indexOf(searchVal) > -1;
+                var matchSearch = s.name.toLowerCase().indexOf(searchName) > -1 || 
+                                  s.appid.toLowerCase().indexOf(searchName) > -1 || 
+                                  String(s.nw_file).indexOf(searchName) > -1;
+                var matchArea = filterArea === "" || s.subdiv === filterArea;
+                return matchSearch && matchArea;
             });
 
-            var html = '';
-            var actionHeader = isAdmin ? '<th style="text-align:center;">Actions</th>' : '';
+            calculateDashboardAndFinance(filtered);
 
-            if(currentView === 'basic') {
-                html += '<thead><tr><th>Samiti Name</th><th>President</th><th>Mobile</th><th>Camp Site</th>'+actionHeader+'</tr></thead><tbody>';
-                for(var i=0; i<filtered.length; i++) {
-                    var s = filtered[i];
-                    var actionCell = isAdmin ? '<td style="text-align:center;"><button class="btn btn-blue" onclick="editSamiti(\'' + s.fbKey + '\')">Edit</button> <button class="btn" style="background:red; color:white; padding:6px; font-size:12px;" onclick="deleteSamiti(\'' + s.fbKey + '\')">Delete</button></td>' : '';
-                    html += '<tr><td><b>' + s.name + '</b><br><small>' + (s.reg || 'N/A') + '</small></td><td>' + s.pres + '</td><td>📞 ' + s.mobile + '</td><td>' + s.address + '</td>'+actionCell+'</tr>';
+            var html = '';
+            filtered.forEach(function(s, index) {
+                var actionCell = isAdmin ? `<td style="text-align:center;"><button class="btn btn-blue btn-action" onclick="editSamiti('${s.fbKey}')">✏️ Edit</button><button class="btn btn-action" style="background:#dc2626; color:white;" onclick="deleteSamiti('${s.fbKey}')">🗑️ Delete</button></td>` : '';
+
+                // Mapping saved raw IDs into readable departmental badges
+                var nocBadges = [];
+                if(s.nocs && Array.isArray(s.nocs)) {
+                    s.nocs.forEach(function(dId) {
+                        if(nocDepartments[dId]) {
+                            nocBadges.push(nocDepartments[dId].name);
+                        }
+                    });
                 }
-            } 
-            else if(currentView === 'noc') {
-                html += '<thead><tr><th>Samiti Name</th><th>Police</th><th>Traffic</th><th>MCD</th><th>DDA</th><th>Fire</th><th>Electricity</th>'+actionHeader+'</tr></thead><tbody>';
-                for(var i=0; i<filtered.length; i++) {
-                    var s = filtered[i];
-                    var actionCell = isAdmin ? '<td style="text-align:center;"><button class="btn btn-blue" onclick="editSamiti(\'' + s.fbKey + '\')">Update NOC</button></td>' : '';
-                    html += '<tr><td><b>' + s.name + '</b></td>' +
-                        '<td><span class="noc-badge ' + (s.noc_police==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_police==='Yes'?'Clear':'Pending') + '</span></td>' +
-                        '<td><span class="noc-badge ' + (s.noc_traffic==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_traffic==='Yes'?'Clear':'Pending') + '</span></td>' +
-                        '<td><span class="noc-badge ' + (s.noc_mcd==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_mcd==='Yes'?'Clear':'Pending') + '</span></td>' +
-                        '<td><span class="noc-badge ' + (s.noc_dda==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_dda==='Yes'?'Clear':'Pending') + '</span></td>' +
-                        '<td><span class="noc-badge ' + (s.noc_fire==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_fire==='Yes'?'Clear':'Pending') + '</span></td>' +
-                        '<td><span class="noc-badge ' + (s.noc_electric==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_electric==='Yes'?'Clear':'Pending') + '</span></td>' +
-                        actionCell + '</tr>';
-                }
-            } 
-            else if(currentView === 'finance') {
-                html += '<thead><tr><th>Samiti Name</th><th>Size/Days</th><th>Sanctioned</th><th>Advance (50%)</th><th>UC Status</th><th>Final Payable</th>'+actionHeader+'</tr></thead><tbody>';
-                for(var i=0; i<filtered.length; i++) {
-                    var s = filtered[i];
-                    var adv = Number(s.sanc || 0) * 0.5; var finPay = s.uc_status === 'Submitted' ? (s.sanc - adv) : (s.uc_status === 'Partial' ? (s.sanc - adv)*0.8 : 0);
-                    var actionCell = isAdmin ? '<td style="text-align:center;"><button class="btn btn-blue" onclick="editSamiti(\'' + s.fbKey + '\')">Update Finance</button></td>' : '';
-                    html += '<tr><td><b>' + s.name + '</b></td><td>' + s.area_size + ' SqFt / ' + s.days + ' Days</td><td><b>₹' + s.sanc + '</b></td><td style="color:blue;">₹' + adv + '</td><td><b>' + (s.uc_status==='Submitted'?'✔️ Clear':s.uc_status==='Partial'?'⚠️ Partial':'❌ Pending') + '</b></td><td style="color:green; font-weight:bold;">₹' + finPay + '</td>'+actionCell+'</tr>';
-                }
-            }
-            table.innerHTML = html;
+                var nocString = nocBadges.length > 0 ? nocBadges.join(", ") : '<span style="color:#9ca3af;">None</span>';
+
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${s.nw_file}</td>
+                    <td><b>${s.subdiv}</b></td>
+                    <td>${s.appid}</td>
+                    <td><b>${s.name}</b></td>
+                    <td>${s.location}</td>
+                    <td>${s.area_sqft || 0}</td>
+                    <td>${s.days || 0}</td>
+                    <td>₹${Number(s.gia || 0).toLocaleString('en-IN')}</td>
+                    <td style="color:#ea580c; font-weight:600;">₹${Number(s.adv || 0).toLocaleString('en-IN')}</td>
+                    <td style="color:#059669; font-weight:600;">₹${Number(s.rem || 0).toLocaleString('en-IN')}</td>
+                    <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold;">${nocString}</span></td>
+                    <td>${s.bank_name || '-'}</td>
+                    <td>${s.bank_acc || '-'}</td>
+                    <td>${s.bank_ifsc || '-'}</td>
+                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis;">${s.remarks || '-'}</td>
+                    ${actionCell}
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
         function filterData() { renderMasterTable(); }
+        
         function openModal() {
-            document.getElementById('samitiForm').reset(); document.getElementById('edit-id').value = '';
-            document.getElementById('modal-title').innerText = "Register New Samiti";
-            document.getElementById('samitiModal').style.display = 'block'; liveFinanceCalc();
+            document.getElementById('samitiForm').reset(); 
+            document.getElementById('edit-id').value = '';
+            document.getElementById('modal-title').innerText = "➕ Add New Samiti Record";
+            document.getElementById('samitiModal').style.display = 'block';
         }
         function closeModal() { document.getElementById('samitiModal').style.display = 'none'; }
 
         function editSamiti(key) {
-            var s = samitiList.find(function(item) { return item.fbKey === key; });
+            var s = samitiList.find(item => item.fbKey === key);
             if(!s) return;
             document.getElementById('edit-id').value = s.fbKey;
+            document.getElementById('form-nw-file').value = s.nw_file;
+            document.getElementById('form-subdiv').value = s.subdiv;
+            document.getElementById('form-appid').value = s.appid;
+            document.getElementById('form-status').value = s.status || 'Pending';
             document.getElementById('form-name').value = s.name;
-            document.getElementById('form-reg').value = s.reg || '';
-            document.getElementById('form-pres').value = s.pres;
-            document.getElementById('form-mobile').value = s.mobile;
-            document.getElementById('form-address').value = s.address || '';
-            document.getElementById('noc-police').value = s.noc_police || 'No';
-            document.getElementById('noc-traffic').value = s.noc_traffic || 'No';
-            document.getElementById('noc-mcd').value = s.noc_mcd || 'No';
-            document.getElementById('noc-dda').value = s.noc_dda || 'No';
-            document.getElementById('noc-fire').value = s.noc_fire || 'No';
-            document.getElementById('noc-electric').value = s.noc_electric || 'No';
-            document.getElementById('form-area-size').value = s.area_size || 0;
+            document.getElementById('form-location').value = s.location;
+            document.getElementById('form-area-sqft').value = s.area_sqft || 0;
             document.getElementById('form-days').value = s.days || 0;
-            document.getElementById('form-sanc').value = s.sanc || 0;
-            document.getElementById('form-uc-status').value = s.uc_status || 'Pending';
-            document.getElementById('samitiModal').style.display = 'block'; liveFinanceCalc();
+            document.getElementById('form-gia').value = s.gia || 0;
+            document.getElementById('form-adv').value = s.adv || 0;
+            document.getElementById('form-rem').value = s.rem || 0;
+            document.getElementById('form-bank-name').value = s.bank_name || '';
+            document.getElementById('form-bank-acc').value = s.bank_acc || '';
+            document.getElementById('form-bank-ifsc').value = s.bank_ifsc || '';
+            document.getElementById('form-bank-micr').value = s.bank_micr || '';
+            document.getElementById('form-remarks').value = s.remarks || '';
+            
+            // Set Checkboxes for Saved NOCs
+            var checkboxes = document.getElementsByName('noc_status');
+            checkboxes.forEach(function(box) {
+                box.checked = (s.nocs && s.nocs.includes(box.value));
+            });
+
+            document.getElementById('modal-title').innerText = "✏️ Edit Samiti Record Sheet";
+            document.getElementById('samitiModal').style.display = 'block';
         }
 
         function saveSamiti(e) {
             e.preventDefault();
-            if(!isAdmin) { alert("Unauthorized action!"); return; }
+            if(!isAdmin) return;
             var key = document.getElementById('edit-id').value;
-            var payload = {
-                name: document.getElementById('form-name').value,
-                reg: document.getElementById('form-reg').value,
-                pres: document.getElementById('form-pres').value,
-                mobile: document.getElementById('form-mobile').value,
-                address: document.getElementById('form-address').value,
-                noc_police: document.getElementById('noc-police').value,
-                noc_traffic: document.getElementById('noc-traffic').value,
-                noc_mcd: document.getElementById('noc-mcd').value,
-                noc_dda: document.getElementById('noc-dda').value,
-                noc_fire: document.getElementById('noc-fire').value,
-                noc_electric: document.getElementById('noc-electric').value,
-                area_size: Number(document.getElementById('form-area-size').value || 0),
-                days: Number(document.getElementById('form-days').value || 0),
-                sanc: Number(document.getElementById('form-sanc').value || 0),
-                uc_status: document.getElementById('form-uc-status').value
-            };
 
-            if (key) {
-                db.child(key).set(payload);
-            } else {
-                db.push(payload);
-            }
+            // Gathering Checked NOCs
+            var selectedNocs = [];
+            var checkboxes = document.getElementsByName('noc_status');
+            checkboxes.forEach(function(box) {
+                if(box.checked) selectedNocs.push(box.value);
+            });
+
+            var payload = {
+                nw_file: Number(document.getElementById('form-nw-file').value),
+                subdiv: document.getElementById('form-subdiv').value,
+                appid: document.getElementById('form-appid').value,
+                status: document.getElementById('form-status').value,
+                name: document.getElementById('form-name').value,
+                location: document.getElementById('form-location').value,
+                area_sqft: Number(document.getElementById('form-area-sqft').value || 0),
+                days: Number(document.getElementById('form-days').value || 0),
+                nocs: selectedNocs,
+                gia: Number(document.getElementById('form-gia').value || 0),
+                adv: Number(document.getElementById('form-adv').value || 0),
+                rem: Number(document.getElementById('form-rem').value || 0),
+                bank_name: document.getElementById('form-bank-name').value,
+                bank_acc: document.getElementById('form-bank-acc').value,
+                bank_ifsc: document.getElementById('form-bank-ifsc').value,
+                bank_micr: document.getElementById('form-bank-micr').value,
+                remarks: document.getElementById('form-remarks').value
+            };
+            if (key) db.child(key).set(payload); else db.push(payload);
             closeModal();
         }
 
         function deleteSamiti(key) {
             if(!isAdmin) return;
-            if(confirm("Are you sure you want to delete this record?")) {
+            if(confirm("⚠️ Are you sure you want to delete this row permanently?")) {
                 db.child(key).remove();
             }
         }
 
         function exportToExcel() {
-            var wsData = samitiList.map(function(s) {
-                return { "Samiti Name": s.name, "President": s.pres, "Mobile": s.mobile, "Total Sanctioned (₹)": s.sanc, "UC Status": s.uc_status }
+            var searchName = document.getElementById('search-name').value.toLowerCase();
+            var filterArea = document.getElementById('filter-area').value;
+
+            var filtered = samitiList.filter(function(s) {
+                var matchSearch = s.name.toLowerCase().indexOf(searchName) > -1 || 
+                                  s.appid.toLowerCase().indexOf(searchName) > -1 || 
+                                  String(s.nw_file).indexOf(searchName) > -1;
+                var matchArea = filterArea === "" || s.subdiv === filterArea;
+                return matchSearch && matchArea;
+            });
+
+            var wsData = filtered.map(function(s, idx) {
+                var nocBadges = [];
+                if(s.nocs && Array.isArray(s.nocs)) {
+                    s.nocs.forEach(dId => { if(nocDepartments[dId]) nocBadges.push(nocDepartments[dId].name); });
+                }
+                return {
+                    "S. No.": idx + 1, "NW File Sl. No.": s.nw_file, "Sub Division": s.subdiv,
+                    "Application ID": s.appid, "Samiti Name": s.name, "Location of Camp": s.location,
+                    "Camp Area (Sq. Ft.)": s.area_sqft, "Camp Days": s.days, "GIA Eligibility": s.gia,
+                    "Advance 50% Released": s.adv, "Proposed Remaining Payment": s.rem, "Obtained NOCs": nocBadges.join(", "),
+                    "Bank Name": s.bank_name, "Account Number": s.bank_acc, "IFSC Code": s.bank_ifsc, "Remarks": s.remarks
+                }
             });
             var worksheet = XLSX.utils.json_to_sheet(wsData); var workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Live Report"); XLSX.writeFile(workbook, "Live_Kanwar_Report.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Samiti Master Sheet");
+            XLSX.writeFile(workbook, "Kanwar_Samiti_Filtered_Report.xlsx");
         }
     </script>
 </body>
