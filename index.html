@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delhi Kanwar Yatra Live Portal</title>
+    <!-- SheetJS for Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Firebase core & Database Libraries (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; color: #333; }
+        .navbar { background-color: #ea580c; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 20px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-green { background-color: #16a34a; color: white; }
+        .btn-blue { background-color: #2563eb; color: white; padding: 6px 12px; font-size: 12px; border-radius: 4px; }
+        .btn-excel { background-color: #059669; color: white; }
+        
+        .container { max-width: 1300px; margin: 20px auto; padding: 0 15px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #ccc; }
+        .card-total { border-left-color: #2563eb; }
+        .card-noc { border-left-color: #16a34a; }
+        .card-grant { border-left-color: #ea580c; }
+        .card p { margin: 0; color: #666; font-size: 11px; text-transform: uppercase; font-weight: bold; }
+        .card h2 { margin: 5px 0 0 0; font-size: 22px; }
+
+        .view-switcher { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+        .tab-btn { padding: 10px 20px; background: #e5e7eb; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; color: #4b5563; }
+        .tab-btn.active { background: #ea580c; color: white; }
+
+        .table-container { background: white; border-radius: 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1000px; }
+        th { background-color: #f9fafb; padding: 12px; font-size: 12px; color: #666; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; vertical-align: middle; }
+        tr:hover { background-color: #f9fafb; }
+        
+        .noc-badge { display: inline-block; padding: 2px 6px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-right: 3px; margin-bottom: 3px; }
+        .noc-yes { background-color: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+        .noc-no { background-color: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; max-width: 850px; margin: 30px auto; padding: 25px; border-radius: 8px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
+        .form-section { border-bottom: 1px solid #fed7aa; padding-bottom: 5px; margin: 15px 0 10px 0; font-weight: bold; color: #ea580c; font-size: 13px; text-transform: uppercase; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; margin-bottom: 4px; color: #555; font-weight: bold; }
+        .form-group input, .form-group select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .full-width { grid-column: 1 / -1; }
+        .calc-highlight { background-color: #f0fdf4; border: 1px dashed #16a34a; padding: 8px; border-radius: 4px; margin-top: 10px; font-size: 13px; font-weight: bold; color: #15803d; }
+        
+        .admin-box { display: flex; align-items: center; gap: 10px; background: #fff3e0; padding: 5px 10px; border-radius: 5px; border: 1px dashed #f57c00; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>Delhi Kanwar Yatra Live Dashboard</h1>
+        <!-- Admin Entry Control Checkbox -->
+        <div class="admin-box">
+            <label style="color:#e65100; font-weight:bold; font-size:13px; cursor:pointer;">
+                <input type="checkbox" id="admin-mode" onchange="toggleAdminMode()"> Admin Control (Data Entry)
+            </label>
+            <button id="add-btn" onclick="openModal()" class="btn btn-green" style="display:none;">+ Register New Samiti</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- DASHBOARD CARDS -->
+        <div class="grid-5">
+            <div class="card card-total"><p>Total Registered Samiti</p><h2 id="dash-total">0</h2></div>
+            <div class="card card-noc"><p>All NOC Clear Samitis</p><h2 id="dash-noc-clear" style="color: #16a34a;">0</h2></div>
+            <div class="card card-grant"><p>Total Sanctioned Amount</p><h2 id="dash-total-sanc" style="color: #ea580c;">₹0</h2></div>
+            <div class="card card-grant" style="border-left-color: #2563eb;"><p>Total 50% Advance Paid</p><h2 id="dash-total-adv" style="color: #2563eb;">₹0</h2></div>
+        </div>
+
+        <!-- SEARCH BAR -->
+        <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <input type="text" id="search-box" oninput="filterData()" placeholder="Search by Samiti Name / President..." style="padding: 8px; width: 350px; border: 1px solid #ccc; border-radius: 5px;">
+            <button onclick="exportToExcel()" class="btn btn-excel">📊 Export Report to Excel</button>
+        </div>
+
+        <!-- TABS NAVIGATION -->
+        <div class="view-switcher">
+            <button id="tab-basic" class="tab-btn active" onclick="switchView('basic')">📋 1. Samiti Registration Details</button>
+            <button id="tab-noc" class="tab-btn" onclick="switchView('noc')">🛡️ 2. Department NOC Status</button>
+            <button id="tab-finance" class="tab-btn" onclick="switchView('finance')">💰 3. Area, Days & Payment Report (UC)</button>
+        </div>
+
+        <!-- MASTER DATA TABLE -->
+        <div class="table-container">
+            <table id="master-table">
+                <!-- Content gets filled live from Firebase -->
+            </table>
+        </div>
+    </div>
+
+    <!-- ENTRY & UPDATE MODAL -->
+    <div id="samitiModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" style="margin:0; color:#ea580c;">Kanwar Samiti Registration Form</h3>
+                <span onclick="closeModal()" style="font-size:24px; cursor:pointer; font-weight:bold;">&times;</span>
+            </div>
+            <form id="samitiForm" onsubmit="saveSamiti(event)">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-section">1. Registration & Contact Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Samiti Name*</label><input type="text" id="form-name" required></div>
+                    <div class="form-group"><label>Registration No./Date</label><input type="text" id="form-reg"></div>
+                    <div class="form-group"><label>President Name*</label><input type="text" id="form-pres" required></div>
+                    <div class="form-group"><label>Mobile Number*</label><input type="text" id="form-mobile" required maxLength="10"></div>
+                    <div class="form-group full-width"><label>Camp/Sthalan Address</label><input type="text" id="form-address"></div>
+                </div>
+
+                <div class="form-section">2. Required Department NOC Status</div>
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+                    <div class="form-group"><label>Delhi Police</label><select id="noc-police"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
+                    <div class="form-group"><label>Traffic Police</label><select id="noc-traffic"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
+                    <div class="form-group"><label>MCD</label><select id="noc-mcd"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
+                    <div class="form-group"><label>DDA</label><select id="noc-dda"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
+                    <div class="form-group"><label>Fire Dept</label><select id="noc-fire"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
+                    <div class="form-group"><label>Electricity/BSES</label><select id="noc-electric"><option value="No">❌ Pending</option><option value="Yes">✔️ Clear</option></select></div>
+                </div>
+
+                <div class="form-section">3. Area, Days & Financial Sanctions</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Camp Area Size (Sq.Ft)</label><input type="number" id="form-area-size" value="0" oninput="liveFinanceCalc()"></div>
+                    <div class="form-group"><label>Total Days of Camp</label><input type="number" id="form-days" value="0" oninput="liveFinanceCalc()"></div>
+                    <div class="form-group"><label>Total Amount Sanctioned (₹)</label><input type="number" id="form-sanc" value="0" oninput="liveFinanceCalc()"></div>
+                    <div class="form-group"><label>UC (Utilization Certificate)</label>
+                        <select id="form-uc-status" onchange="liveFinanceCalc()">
+                            <option value="Pending">❌ Not Submitted</option>
+                            <option value="Submitted">✔️ Submitted (Full OK)</option>
+                            <option value="Partial">⚠️ Discrepancy / Deduct Amount</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="calc-highlight" id="modal-calc-box">
+                    Calculated Breakdown: Advance (50%): ₹0 | Balance Payable: ₹0
+                </div>
+
+                <div style="text-align: right; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                    <button type="button" onclick="closeModal()" class="btn" style="background:#ccc; color:#333;">Cancel</button>
+                    <button type="submit" id="save-btn" class="btn btn-green">Save/Update Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE THIS WITH YOUR OWN FIREBASE CONFIG FROM STEP 2
+        var firebaseConfig = {
+            apiKey: "AIzaSyB2OQnBbkwzBABYdtXUo5rJtnN68L_GOzA",
+             authDomain: "kanwar-yatra-2026.firebaseapp.com",
+            databaseURL: "https://kanwar-yatra-2026-default-rtdb.firebaseio.com",
+            projectId: "kanwar-yatra-2026",
+            storageBucket: "kanwar-yatra-2026.firebasestorage.app",
+            messagingSenderId: "1022221065080",
+            appId: "1:1022221065080:web:81fca9047005454d84068d"
+
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.database().ref("kanwar_samiti_master");
+
+        var samitiList = [];
+        var currentView = 'basic';
+        var isAdmin = false;
+
+        // Fetch data LIVE from Firebase
+        db.on("value", function(snapshot) {
+            var data = snapshot.val();
+            samitiList = [];
+            if(data) {
+                for(var key in data) {
+                    var obj = data[key];
+                    obj.fbKey = key; // Keep track of firebase record key
+                    samitiList.push(obj);
+                }
+            }
+            calculateDashboard();
+            renderMasterTable();
+        });
+
+        function toggleAdminMode() {
+            isAdmin = document.getElementById("admin-mode").checked;
+            document.getElementById("add-btn").style.display = isAdmin ? "inline-block" : "none";
+            renderMasterTable();
+        }
+
+        function switchView(viewName) {
+            currentView = viewName;
+            document.getElementById('tab-basic').classList.remove('active');
+            document.getElementById('tab-noc').classList.remove('active');
+            document.getElementById('tab-finance').classList.remove('active');
+            document.getElementById('tab-' + viewName).classList.add('active');
+            renderMasterTable();
+        }
+
+        function calculateDashboard() {
+            var total = samitiList.length;
+            var nocClearCount = 0; var totalSanc = 0; var totalAdv = 0;
+
+            for(var i=0; i<samitiList.length; i++) {
+                var s = samitiList[i];
+                if(s.noc_police==='Yes' && s.noc_traffic==='Yes' && s.noc_mcd==='Yes' && s.noc_dda==='Yes' && s.noc_fire==='Yes' && s.noc_electric==='Yes') {
+                    nocClearCount++;
+                }
+                var sancAmt = Number(s.sanc || 0);
+                totalSanc += sancAmt;
+                totalAdv += (sancAmt * 0.50);
+            }
+            document.getElementById('dash-total').innerText = total;
+            document.getElementById('dash-noc-clear').innerText = nocClearCount;
+            document.getElementById('dash-total-sanc').innerText = '₹' + totalSanc.toLocaleString('en-IN');
+            document.getElementById('dash-total-adv').innerText = '₹' + totalAdv.toLocaleString('en-IN');
+        }
+
+        function liveFinanceCalc() {
+            var sanc = Number(document.getElementById('form-sanc').value || 0);
+            var uc = document.getElementById('form-uc-status').value;
+            var advance = sanc * 0.50; var finalPay = 0;
+
+            if(uc === 'Submitted') finalPay = sanc - advance;
+            else if(uc === 'Partial') finalPay = (sanc - advance) * 0.80;
+
+            document.getElementById('modal-calc-box').innerHTML = 
+                "<b>Live Calculation:</b><br>• Advance Released: <b>₹" + advance + "</b><br>• Final Payable: <b>₹" + finalPay + "</b>";
+        }
+
+        function renderMasterTable() {
+            var table = document.getElementById('master-table');
+            var searchVal = document.getElementById('search-box').value.toLowerCase();
+            
+            var filtered = samitiList.filter(function(s) {
+                return s.name.toLowerCase().indexOf(searchVal) > -1 || s.pres.toLowerCase().indexOf(searchVal) > -1;
+            });
+
+            var html = '';
+            var actionHeader = isAdmin ? '<th style="text-align:center;">Actions</th>' : '';
+
+            if(currentView === 'basic') {
+                html += '<thead><tr><th>Samiti Name</th><th>President</th><th>Mobile</th><th>Camp Site</th>'+actionHeader+'</tr></thead><tbody>';
+                for(var i=0; i<filtered.length; i++) {
+                    var s = filtered[i];
+                    var actionCell = isAdmin ? '<td style="text-align:center;"><button class="btn btn-blue" onclick="editSamiti(\'' + s.fbKey + '\')">Edit</button> <button class="btn" style="background:red; color:white; padding:6px; font-size:12px;" onclick="deleteSamiti(\'' + s.fbKey + '\')">Delete</button></td>' : '';
+                    html += '<tr><td><b>' + s.name + '</b><br><small>' + (s.reg || 'N/A') + '</small></td><td>' + s.pres + '</td><td>📞 ' + s.mobile + '</td><td>' + s.address + '</td>'+actionCell+'</tr>';
+                }
+            } 
+            else if(currentView === 'noc') {
+                html += '<thead><tr><th>Samiti Name</th><th>Police</th><th>Traffic</th><th>MCD</th><th>DDA</th><th>Fire</th><th>Electricity</th>'+actionHeader+'</tr></thead><tbody>';
+                for(var i=0; i<filtered.length; i++) {
+                    var s = filtered[i];
+                    var actionCell = isAdmin ? '<td style="text-align:center;"><button class="btn btn-blue" onclick="editSamiti(\'' + s.fbKey + '\')">Update NOC</button></td>' : '';
+                    html += '<tr><td><b>' + s.name + '</b></td>' +
+                        '<td><span class="noc-badge ' + (s.noc_police==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_police==='Yes'?'Clear':'Pending') + '</span></td>' +
+                        '<td><span class="noc-badge ' + (s.noc_traffic==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_traffic==='Yes'?'Clear':'Pending') + '</span></td>' +
+                        '<td><span class="noc-badge ' + (s.noc_mcd==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_mcd==='Yes'?'Clear':'Pending') + '</span></td>' +
+                        '<td><span class="noc-badge ' + (s.noc_dda==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_dda==='Yes'?'Clear':'Pending') + '</span></td>' +
+                        '<td><span class="noc-badge ' + (s.noc_fire==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_fire==='Yes'?'Clear':'Pending') + '</span></td>' +
+                        '<td><span class="noc-badge ' + (s.noc_electric==='Yes'?'noc-yes':'noc-no') + '">' + (s.noc_electric==='Yes'?'Clear':'Pending') + '</span></td>' +
+                        actionCell + '</tr>';
+                }
+            } 
+            else if(currentView === 'finance') {
+                html += '<thead><tr><th>Samiti Name</th><th>Size/Days</th><th>Sanctioned</th><th>Advance (50%)</th><th>UC Status</th><th>Final Payable</th>'+actionHeader+'</tr></thead><tbody>';
+                for(var i=0; i<filtered.length; i++) {
+                    var s = filtered[i];
+                    var adv = Number(s.sanc || 0) * 0.5; var finPay = s.uc_status === 'Submitted' ? (s.sanc - adv) : (s.uc_status === 'Partial' ? (s.sanc - adv)*0.8 : 0);
+                    var actionCell = isAdmin ? '<td style="text-align:center;"><button class="btn btn-blue" onclick="editSamiti(\'' + s.fbKey + '\')">Update Finance</button></td>' : '';
+                    html += '<tr><td><b>' + s.name + '</b></td><td>' + s.area_size + ' SqFt / ' + s.days + ' Days</td><td><b>₹' + s.sanc + '</b></td><td style="color:blue;">₹' + adv + '</td><td><b>' + (s.uc_status==='Submitted'?'✔️ Clear':s.uc_status==='Partial'?'⚠️ Partial':'❌ Pending') + '</b></td><td style="color:green; font-weight:bold;">₹' + finPay + '</td>'+actionCell+'</tr>';
+                }
+            }
+            table.innerHTML = html;
+        }
+
+        function filterData() { renderMasterTable(); }
+        function openModal() {
+            document.getElementById('samitiForm').reset(); document.getElementById('edit-id').value = '';
+            document.getElementById('modal-title').innerText = "Register New Samiti";
+            document.getElementById('samitiModal').style.display = 'block'; liveFinanceCalc();
+        }
+        function closeModal() { document.getElementById('samitiModal').style.display = 'none'; }
+
+        function editSamiti(key) {
+            var s = samitiList.find(function(item) { return item.fbKey === key; });
+            if(!s) return;
+            document.getElementById('edit-id').value = s.fbKey;
+            document.getElementById('form-name').value = s.name;
+            document.getElementById('form-reg').value = s.reg || '';
+            document.getElementById('form-pres').value = s.pres;
+            document.getElementById('form-mobile').value = s.mobile;
+            document.getElementById('form-address').value = s.address || '';
+            document.getElementById('noc-police').value = s.noc_police || 'No';
+            document.getElementById('noc-traffic').value = s.noc_traffic || 'No';
+            document.getElementById('noc-mcd').value = s.noc_mcd || 'No';
+            document.getElementById('noc-dda').value = s.noc_dda || 'No';
+            document.getElementById('noc-fire').value = s.noc_fire || 'No';
+            document.getElementById('noc-electric').value = s.noc_electric || 'No';
+            document.getElementById('form-area-size').value = s.area_size || 0;
+            document.getElementById('form-days').value = s.days || 0;
+            document.getElementById('form-sanc').value = s.sanc || 0;
+            document.getElementById('form-uc-status').value = s.uc_status || 'Pending';
+            document.getElementById('samitiModal').style.display = 'block'; liveFinanceCalc();
+        }
+
+        function saveSamiti(e) {
+            e.preventDefault();
+            var key = document.getElementById('edit-id').value;
+            var payload = {
+                name: document.getElementById('form-name').value,
+                reg: document.getElementById('form-reg').value,
+                pres: document.getElementById('form-pres').value,
+                mobile: document.getElementById('form-mobile').value,
+                address: document.getElementById('form-address').value,
+                noc_police: document.getElementById('noc-police').value,
+                noc_traffic: document.getElementById('noc-traffic').value,
+                noc_mcd: document.getElementById('noc-mcd').value,
+                noc_dda: document.getElementById('noc-dda').value,
+                noc_fire: document.getElementById('noc-fire').value,
+                noc_electric: document.getElementById('noc-electric').value,
+                area_size: Number(document.getElementById('form-area-size').value || 0),
+                days: Number(document.getElementById('form-days').value || 0),
+                sanc: Number(document.getElementById('form-sanc').value || 0),
+                uc_status: document.getElementById('form-uc-status').value
+            };
+
+            if (key) {
+                db.child(key).set(payload); // Update to Firebase
+            } else {
+                db.push(payload); // Add new to Firebase
+            }
+            closeModal();
+        }
+
+        function deleteSamiti(key) {
+            if(confirm("Are you sure you want to delete this record from online database?")) {
+                db.child(key).remove();
+            }
+        }
+
+        function exportToExcel() {
+            var wsData = samitiList.map(function(s) {
+                return { "Samiti Name": s.name, "President": s.pres, "Mobile": s.mobile, "Total Sanctioned (₹)": s.sanc, "UC Status": s.uc_status }
+            });
+            var worksheet = XLSX.utils.json_to_sheet(wsData); var workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Live Report"); XLSX.writeFile(workbook, "Live_Kanwar_Report.xlsx");
+        }
+    </script>
+</body>
+</html>
