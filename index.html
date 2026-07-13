@@ -45,9 +45,15 @@
         td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; white-space: nowrap; }
         tr:hover { background-color: #f8fafc; }
         
-        .noc-badge { padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-        .noc-received { background-color: #d1fae5; color: #065f46; border: 1px solid #34d399; }
-        .noc-pending { background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+        .grid-select { padding: 4px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 11px; font-weight: bold; }
+        .badge-granted { background-color: #d1fae5; color: #065f46; border: 1px solid #34d399; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .badge-pending { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .badge-notrec { background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .badge-notpert { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+
+        .final-noc-given { background-color: #10b981; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .final-noc-notgiven { background-color: #ef4444; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+
         .item-badge { padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .item-yes { background-color: #eff6ff; color: #1e40af; border: 1px solid #93c5fd; }
         .item-no { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
@@ -81,6 +87,12 @@
         .slab-title { font-weight: bold; color: #1e293b; font-size: 13px; margin-bottom: 3px; }
         .slab-desc { font-size: 11px; color: #64748b; line-height: 1.3; }
         .slab-amt { font-size: 14px; font-weight: bold; color: #ea580c; margin-top: 6px; }
+        
+        .rec-tag { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+        .rec-mla { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .rec-mp { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+        .rec-minister { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .rec-none { background: #f1f5f9; color: #475569; }
     </style>
 </head>
 <body>
@@ -120,7 +132,7 @@
         <div class="table-section-wrapper" id="table-section-wrapper">
             <!-- Filters -->
             <div class="controls-panel">
-                <input type="text" id="search-name" oninput="filterAllData()" placeholder="🔍 Search by Samiti Name, App ID, File No..." class="search-input">
+                <input type="text" id="search-name" oninput="filterAllData()" placeholder="🔍 Search by Samiti Name, App ID, MLA/MP Name..." class="search-input">
                 <select id="filter-area" onchange="filterAllData()" class="filter-select">
                     <option value="">🔍 Filter by Sub Division (All)</option>
                     <option value="Rohini">Rohini</option>
@@ -139,8 +151,8 @@
                 <div id="toggle-items-tab" class="matrix-toggle-btn" onclick="switchMatrixTab('items')">🎪 View Camp Amenities Verification Grid</div>
             </div>
 
-            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-                <table style="min-width: 1000px;">
+            <div class="table-container" style="max-height: 450px; overflow-y: auto;">
+                <table style="min-width: 1200px;">
                     <thead><tr id="matrix-header"></tr></thead>
                     <tbody id="matrix-body"></tbody>
                 </table>
@@ -149,7 +161,7 @@
             <!-- Master Table -->
             <div class="section-title">🏢 Master Camp Records Accounts Sheet</div>
             <div class="table-container">
-                <table style="min-width: 1200px;" id="master-records-table">
+                <table style="min-width: 1500px;" id="master-records-table">
                     <thead><tr id="table-header-row"></tr></thead>
                     <tbody id="table-body"></tbody>
                 </table>
@@ -166,7 +178,10 @@
                 
                 <div class="form-section">1. Identification Specs</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>NW File No.* (Auto-Generated)</label><input type="text" id="form-nw-file" placeholder="e.g. NW-001" required></div>
+                    <div class="form-group">
+                        <label>NW File No.* (Type & Press Enter/Tab to load existings)</label>
+                        <input type="text" id="form-nw-file" placeholder="e.g. NW-001" required onchange="handleFileNoLookup(this.value)">
+                    </div>
                     <div class="form-group"><label>Sub Division*</label>
                         <select id="form-subdiv" required>
                             <option value="Rohini">Rohini</option>
@@ -174,19 +189,52 @@
                             <option value="Kirari">Kirari</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>Application ID (Optional)</label><input type="text" id="form-appid"></div>
+                    <div class="form-group"><label>Date of Application*</label><input type="date" id="form-app-date" required></div>
                     <div class="form-group"><label>Status*</label>
                         <select id="form-status"><option value="Pending">Pending</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option></select>
                     </div>
                 </div>
 
+                <div class="form-section">🌟 Recommendation Details</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Recommendation By</label>
+                        <select id="form-rec-by">
+                            <option value="None">None / Direct Application</option>
+                            <option value="Hon'ble Area MLA">Hon'ble Area MLA</option>
+                            <option value="MP">Hon'ble MP</option>
+                            <option value="Cabinet Minister">Hon'ble Cabinet Minister</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Dignitary Name</label>
+                        <input type="text" id="form-rec-name" placeholder="e.g. Sh. Rajesh Kumar">
+                    </div>
+                    <div class="form-group">
+                        <label>Constituency</label>
+                        <input type="text" id="form-rec-constituency" placeholder="e.g. Rohini Assembly / North West Delhi">
+                    </div>
+                </div>
+
                 <div class="form-section">2. Camp Setup Details</div>
                 <div class="form-grid">
-                    <div class="form-group full-width"><label>Samiti Name*</label><input type="text" id="form-name" required></div>
-                    <div class="form-group full-width"><label>Location of Camp*</label><input type="text" id="form-location" required></div>
+                    <div class="form-group full-width"><label>Name of Samiti*</label><input type="text" id="form-name" required></div>
+                    <div class="form-group"><label>PAN No.*</label><input type="text" id="form-pan" placeholder="ABCDE1234F" required></div>
+                    <div class="form-group full-width"><label>Address of the Registered Office*</label><input type="text" id="form-reg-address" required></div>
+                    <div class="form-group"><label>Authorised Person / Designation*</label><input type="text" id="form-auth-person" placeholder="Name & Designation" required></div>
+                    <div class="form-group"><label>Mobile No.*</label><input type="tel" id="form-mobile" maxlength="10" placeholder="10 Digit Number" required></div>
+                    <div class="form-group full-width"><label>Proposed Location of Kanwar Camp*</label><input type="text" id="form-location" required></div>
                     <div class="form-group full-width"><label>Google Maps Link</label><input type="url" id="form-map-url" placeholder="https://maps.google.com/..."></div>
-                    <div class="form-group"><label>Camp Area (Sq. Ft.)*</label><input type="number" id="form-area-sqft" value="0" required oninput="evaluateCurrentSlabMatch()"></div>
-                    <div class="form-group"><label>Camp Days*</label><input type="number" id="form-days" value="0" required oninput="evaluateCurrentSlabMatch()"></div>
+                    <div class="form-group"><label>Size of Proposed Camp (Sq. Ft.)*</label><input type="number" id="form-area-sqft" value="0" required oninput="evaluateCurrentSlabMatch()"></div>
+                    
+                    <div class="form-group"><label>Proposed Duration From*</label><input type="date" id="form-duration-from" required onchange="calculateDaysBracket()"></div>
+                    <div class="form-group"><label>Proposed Duration To*</label><input type="date" id="form-duration-to" required onchange="calculateDaysBracket()"></div>
+                    <div class="form-group"><label>No. of Days (Calculated)</label><input type="number" id="form-days" value="0" readonly></div>
+                    
+                    <div class="form-group"><label>Expected Number of Devotees to be served*</label><input type="number" id="form-devotees" value="0" required></div>
+                    <div class="form-group"><label>Previous Experience*</label>
+                        <select id="form-experience"><option value="Yes">Yes</option><option value="No">No</option></select>
+                    </div>
                 </div>
 
                 <div class="form-section">3. Grants & Financial Allocations</div>
@@ -196,7 +244,6 @@
                 </div>
                 
                 <div style="font-size:12px; font-weight:bold; margin-top:10px; color:#475569;">Select Target Slab Allocation Matrix:</div>
-                <!-- Dynamic Buttons Panel -->
                 <div class="slab-panel" id="dynamic-slab-buttons-container"></div>
 
                 <div style="background: #fffbeb; padding: 10px; border-radius: 4px; margin-bottom: 12px; border: 1px solid #fef3c7;">
@@ -209,14 +256,14 @@
                     <div class="form-group"><label>Remaining Payment (Adjust via UC) (₹)</label><input type="number" id="form-rem" value="0" oninput="manualFinancialTrigger()"></div>
                 </div>
 
-                <div class="form-section">4. Remittance Details & Remarks</div>
+                <div class="form-section">4. Remittance Details & Internal Remarks</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Bank Name</label><input type="text" id="form-bank-name"></div>
                     <div class="form-group"><label>Account Number</label><input type="text" id="form-bank-acc"></div>
                     <div class="form-group"><label>IFSC Code</label><input type="text" id="form-bank-ifsc"></div>
                     <div class="form-group"><label>MICR Code</label><input type="text" id="form-bank-micr"></div>
                 </div>
-                <div class="form-group full-width" style="margin-top:10px;"><label>Remarks</label><textarea id="form-remarks" rows="2"></textarea></div>
+                <div class="form-group full-width" style="margin-top:10px;"><label>Remarks / Notes</label><textarea id="form-remarks" rows="2"></textarea></div>
 
                 <div style="text-align: right; margin-top: 20px;">
                     <button type="button" onclick="closeModal()" class="btn" style="background:#ccc; color:#333;">Cancel</button>
@@ -233,7 +280,6 @@
                 <h3 style="margin:0; color:#1e293b;">🛠️ Dynamic Category Matrix & Criteria Table Editor</h3>
                 <button type="button" onclick="addNewCriteriaRow()" class="btn btn-blue" style="margin-left:auto;">➕ Add New Rule Block</button>
             </div>
-            <p style="font-size:12px; color:#64748b; margin-bottom:15px;">Yahan aap Category Matrix ke rules ko Add, Delete aur Modify kar sakte hain. Save karne par auto-calculator badal jayega.</p>
             
             <div class="table-container" style="max-height: 400px; overflow-y: auto;">
                 <table style="width: 100%;" id="config-matrix-table">
@@ -259,42 +305,30 @@
         </div>
     </div>
 
-    <!-- CENTRAL GLOBAL CONFIG MODAL (FULLY RE-DESIGNED WORK MODULE) -->
+    <!-- CENTRAL GLOBAL CONFIG MODAL -->
     <div id="nocModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <h3 style="margin:0 0 10px 0; color:#7c3aed;">⚙️ Portal Central Setup Manager (NOC & Amenities Config)</h3>
-            <p style="font-size:12px; color:#64748b; margin-bottom:20px;">Is configuration editor se aap global dropdown columns list ko dynamically customize kar sakte hain.</p>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Column 1: NOC Departments List Manager -->
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
                     <h4 style="margin:0 0 10px 0; color:#1e293b;">📋 1. Manage NOC Departments</h4>
-                    
                     <div style="display:flex; gap:6px; margin-bottom:12px;">
-                        <input type="text" id="new-noc-dept-name" placeholder="e.g. Traffic Police, PWD" style="flex-grow:1; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                        <input type="text" id="new-noc-dept-name" placeholder="e.g. Fire, MCD" style="flex-grow:1; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
                         <button type="button" onclick="addNewGlobalNocDept()" class="btn btn-purple" style="padding:6px 10px; font-size:12px;">➕ Add</button>
                     </div>
-                    
-                    <div style="max-height: 250px; overflow-y: auto; background:white; border:1px solid #cbd5e1; border-radius:4px; padding:5px;" id="global-noc-list-container">
-                        <!-- Dynamic list items with delete buttons -->
-                    </div>
+                    <div style="max-height: 250px; overflow-y: auto; background:white; border:1px solid #cbd5e1; border-radius:4px; padding:5px;" id="global-noc-list-container"></div>
                 </div>
 
-                <!-- Column 2: Camp Verification Items Checklist Manager -->
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
                     <h4 style="margin:0 0 10px 0; color:#1e293b;">🎪 2. Manage Camp Amenities Items</h4>
-                    
                     <div style="display:flex; gap:6px; margin-bottom:12px;">
-                        <input type="text" id="new-checklist-item-name" placeholder="e.g. CCTV, Waterproof Tent" style="flex-grow:1; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                        <input type="text" id="new-checklist-item-name" placeholder="e.g. CCTV, Tents" style="flex-grow:1; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
                         <button type="button" onclick="addNewGlobalChecklistItem()" class="btn btn-blue" style="padding:6px 10px; font-size:12px;">➕ Add</button>
                     </div>
-                    
-                    <div style="max-height: 250px; overflow-y: auto; background:white; border:1px solid #cbd5e1; border-radius:4px; padding:5px;" id="global-checklist-container">
-                        <!-- Dynamic checklist items with delete buttons -->
-                    </div>
+                    <div style="max-height: 250px; overflow-y: auto; background:white; border:1px solid #cbd5e1; border-radius:4px; padding:5px;" id="global-checklist-container"></div>
                 </div>
             </div>
-            
             <div style="text-align: right; margin-top: 25px; border-top:1px solid #e2e8f0; padding-top:15px;">
                 <button type="button" onclick="closeNocModal()" class="btn btn-dark">❌ Close Control Panel</button>
             </div>
@@ -310,14 +344,13 @@
             storageBucket: "kanwar-yatra-2026.firebasestorage.app",
             messagingSenderId: "1022221065080",
             appId: "1:1022221065080:web:81fca9047005454d84068d"
-
         };
         
         firebase.initializeApp(firebaseConfig);
-        var db = firebase.database().ref("district_kanwar_master_v8");
-        var nocDb = firebase.database().ref("noc_departments_global");
-        var checklistDb = firebase.database().ref("camp_checklist_global");
-        var slabsConfigDb = firebase.database().ref("slabs_table_matrix_setup_v2");
+        var db = firebase.database().ref("district_kanwar_master_v9");
+        var nocDb = firebase.database().ref("noc_departments_global_v9");
+        var checklistDb = firebase.database().ref("camp_checklist_global_v9");
+        var slabsConfigDb = firebase.database().ref("slabs_table_matrix_setup_v9");
 
         var MASTER_PASSWORD = "delhi2026";
         var samitiList = [];
@@ -327,7 +360,6 @@
         var isAdmin = false;
         var currentCalcMode = 'auto'; 
 
-        // Default Schema Structured Image Rule Matrix Array
         var currentSlabsMatrix = [
             { category: "A", minArea: 20001, maxArea: 9999999, minDays: 3, maxDays: 5, amt: 500000 },
             { category: "A", minArea: 20001, maxArea: 9999999, minDays: 6, maxDays: 12, amt: 1000000 },
@@ -339,17 +371,18 @@
             { category: "D", minArea: 0, maxArea: 4999, minDays: 6, maxDays: 12, amt: 100000 }
         ];
 
-        // Realtime Listener for Dynamic Matrix Engine
         slabsConfigDb.on("value", function(snap) {
-            if(snap.val()) {
-                currentSlabsMatrix = snap.val();
-            }
+            if(snap.val()) { currentSlabsMatrix = snap.val(); }
             buildDynamicSlabButtonsHTML(); 
         });
 
-        // Live Dynamic Hooks Listener for Global Panels
         nocDb.on("value", function(snap) { 
             nocDepartments = snap.val() || {}; 
+            if(Object.keys(nocDepartments).length === 0){
+                nocDb.push({name: "Fire"});
+                nocDb.push({name: "MCD"});
+                nocDb.push({name: "Police"});
+            }
             renderGlobalConfigUI();
             renderAllComponents(); 
         });
@@ -373,102 +406,136 @@
             renderAllComponents();
         });
 
-        // Setup Function to Render items list inside Global Config modal manager view
+        function handleFileNoLookup(fileNumValue) {
+            if (!fileNumValue) return;
+            var match = samitiList.find(function(item) {
+                return item.nw_file && item.nw_file.trim().toLowerCase() === fileNumValue.trim().toLowerCase();
+            });
+            
+            if (match) {
+                document.getElementById('edit-id').value = match.fbKey;
+                document.getElementById('form-subdiv').value = match.subdiv || 'Rohini';
+                document.getElementById('form-app-date').value = match.app_date || '';
+                document.getElementById('form-status').value = match.status || 'Pending';
+                
+                document.getElementById('form-rec-by').value = match.rec_by || 'None';
+                document.getElementById('form-rec-name').value = match.rec_name || '';
+                document.getElementById('form-rec-constituency').value = match.rec_constituency || '';
+
+                document.getElementById('form-name').value = match.name || '';
+                document.getElementById('form-pan').value = match.pan || '';
+                document.getElementById('form-reg-address').value = match.reg_address || '';
+                document.getElementById('form-auth-person').value = match.auth_person || '';
+                document.getElementById('form-mobile').value = match.mobile || '';
+                document.getElementById('form-location').value = match.location || '';
+                document.getElementById('form-map-url').value = match.map_url || '';
+                document.getElementById('form-area-sqft').value = match.area_sqft || 0;
+                document.getElementById('form-duration-from').value = match.duration_from || '';
+                document.getElementById('form-duration-to').value = match.duration_to || '';
+                document.getElementById('form-days').value = match.days || 0;
+                document.getElementById('form-devotees').value = match.devotees || 0;
+                document.getElementById('form-experience').value = match.experience || 'No';
+                
+                setCalculationMode('manual'); 
+                document.getElementById('form-gia').value = match.gia || 0;
+                document.getElementById('form-adv').value = match.adv || 0;
+                document.getElementById('form-rem').value = match.rem || 0;
+                document.getElementById('form-bank-name').value = match.bank_name || '';
+                document.getElementById('form-bank-acc').value = match.bank_acc || '';
+                document.getElementById('form-bank-ifsc').value = match.bank_ifsc || '';
+                document.getElementById('form-bank-micr').value = match.bank_micr || '';
+                document.getElementById('form-remarks').value = match.remarks || '';
+                document.getElementById('modal-title').innerText = "✏️ Autofilled/Edit Existing Samiti Sheet";
+                document.getElementById('slab-hint-msg').innerText = `✓ Linked existing data record found for file ${fileNumValue.toUpperCase()}`;
+            }
+        }
+
+        function calculateDaysBracket() {
+            var fromDate = document.getElementById('form-duration-from').value;
+            var toDate = document.getElementById('form-duration-to').value;
+            if(!fromDate || !toDate) return;
+            
+            var d1 = new Date(fromDate);
+            var d2 = new Date(toDate);
+            var diffTime = d2.getTime() - d1.getTime();
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+            
+            if(diffDays < 0) diffDays = 0;
+            document.getElementById('form-days').value = diffDays;
+            evaluateCurrentSlabMatch();
+        }
+
         function renderGlobalConfigUI() {
-            // Render NOC Department List with Delete Hooks
             var nocContainer = document.getElementById('global-noc-list-container');
             if(nocContainer) {
                 var html = '';
-                var keys = Object.keys(nocDepartments);
-                if(keys.length === 0) {
-                    html = '<p style="font-size:11px; color:#aaa; margin:5px;">No Departments configured.</p>';
-                } else {
-                    keys.forEach(function(key) {
-                        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #f1f5f9; font-size:12px;">
-                            <span>🏢 <b>${nocDepartments[key].name}</b></span>
-                            <button type="button" onclick="deleteGlobalNocDept('${key}')" class="btn btn-danger btn-action" style="padding:2px 6px;">🗑️ Remove</button>
-                        </div>`;
-                    });
-                }
+                Object.keys(nocDepartments).forEach(function(key) {
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #f1f5f9; font-size:12px;">
+                        <span>🏢 <b>${nocDepartments[key].name}</b></span>
+                        <button type="button" onclick="deleteGlobalNocDept('${key}')" class="btn btn-danger btn-action" style="padding:2px 6px;">🗑️ Remove</button>
+                    </div>`;
+                });
                 nocContainer.innerHTML = html;
             }
 
-            // Render Checklist Items list with Delete Hooks
             var checklistContainer = document.getElementById('global-checklist-container');
             if(checklistContainer) {
                 var html = '';
-                var keys = Object.keys(checklistItems);
-                if(keys.length === 0) {
-                    html = '<p style="font-size:11px; color:#aaa; margin:5px;">No Amenities configured.</p>';
-                } else {
-                    keys.forEach(function(key) {
-                        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #f1f5f9; font-size:12px;">
-                            <span>🎪 <b>${checklistItems[key].name}</b></span>
-                            <button type="button" onclick="deleteGlobalChecklistItem('${key}')" class="btn btn-danger btn-action" style="padding:2px 6px;">🗑️ Remove</button>
-                        </div>`;
-                    });
-                }
+                Object.keys(checklistItems).forEach(function(key) {
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #f1f5f9; font-size:12px;">
+                        <span>🎪 <b>${checklistItems[key].name}</b></span>
+                        <button type="button" onclick="deleteGlobalChecklistItem('${key}')" class="btn btn-danger btn-action" style="padding:2px 6px;">🗑️ Remove</button>
+                    </div>`;
+                });
                 checklistContainer.innerHTML = html;
             }
         }
 
-        // Action Functions to Write New Entry directly into Global nodes
         function addNewGlobalNocDept() {
             if(!isAdmin) return;
             var nameInput = document.getElementById('new-noc-dept-name');
             var name = nameInput.value.trim();
-            if(!name) { alert("Please enter a valid Department Name."); return; }
-            nocDb.push({ name: name }, function(err) {
-                if(!err) nameInput.value = '';
-            });
+            if(!name) return;
+            nocDb.push({ name: name }, function(err) { if(!err) nameInput.value = ''; });
         }
 
         function deleteGlobalNocDept(key) {
             if(!isAdmin) return;
-            if(confirm("Are you sure you want to remove this department from the active configuration matrix?")) {
-                nocDb.child(key).remove();
-            }
+            if(confirm("Are you sure?")) { nocDb.child(key).remove(); }
         }
 
         function addNewGlobalChecklistItem() {
             if(!isAdmin) return;
             var nameInput = document.getElementById('new-checklist-item-name');
             var name = nameInput.value.trim();
-            if(!name) { alert("Please enter a valid Amenity Title."); return; }
-            checklistDb.push({ name: name }, function(err) {
-                if(!err) nameInput.value = '';
-            });
+            if(!name) return;
+            checklistDb.push({ name: name }, function(err) { if(!err) nameInput.value = ''; });
         }
 
         function deleteGlobalChecklistItem(key) {
             if(!isAdmin) return;
-            if(confirm("Are you sure you want to remove this amenities asset item completely?")) {
-                checklistDb.child(key).remove();
-            }
+            if(confirm("Are you sure?")) { checklistDb.child(key).remove(); }
         }
 
-        // Dynamic buttons setup derived directly from criteria matrix array loop
         function buildDynamicSlabButtonsHTML() {
             var container = document.getElementById('dynamic-slab-buttons-container');
             if(!container) return;
-            
             var html = '';
             currentSlabsMatrix.forEach(function(s, idx) {
                 var areaTxt = s.minArea > 20000 ? "Above 20,000" : (s.minArea === 0 ? `Upto ${s.maxArea}` : `${s.minArea.toLocaleString()}-${s.maxArea.toLocaleString()}`);
                 html += `<button type="button" id="btn-matrix-slab-${idx}" class="slab-select-btn" onclick="executeSlabClick(${idx}, ${s.amt}, '${s.category}', ${s.minArea}, ${s.maxArea}, ${s.minDays}, ${s.maxDays})">
                     <div class="slab-title">Category ${s.category} (${s.minDays}-${s.maxDays} Days)</div>
-                    <div class="slab-desc">Size: ${areaTxt} SqFt<br>Days Bracket: ${s.minDays} to ${s.maxDays}</div>
+                    <div class="slab-desc">Size: ${areaTxt} SqFt</div>
                     <div class="slab-amt">₹${s.amt.toLocaleString('en-IN')}</div>
                 </button>`;
             });
-            
             container.innerHTML = html;
         }
 
         function openSlabsConfigModal() {
             var tbody = document.getElementById('config-matrix-tbody');
             tbody.innerHTML = '';
-            currentSlabsMatrix.forEach(function(s, idx) {
+            currentSlabsMatrix.forEach(function(s) {
                 appendConfigRowHTML(s.category, s.minArea, s.maxArea, s.minDays, s.maxDays, s.amt);
             });
             document.getElementById('slabsConfigModal').style.display = 'block';
@@ -479,50 +546,36 @@
             var tr = document.createElement('tr');
             tr.className = "config-row-item";
             tr.innerHTML = `
-                <td><input type="text" value="${cat}" class="cfg-item-cat" style="width:50px; padding:4px; font-weight:bold; text-align:center;"></td>
-                <td><input type="number" value="${minA}" class="cfg-item-min-area" style="width:90px; padding:4px;"></td>
-                <td><input type="number" value="${maxA}" class="cfg-item-max-area" style="width:90px; padding:4px;"></td>
-                <td><input type="number" value="${minD}" class="cfg-item-min-days" style="width:50px; padding:4px;"></td>
-                <td><input type="number" value="${maxD}" class="cfg-item-max-days" style="width:50px; padding:4px;"></td>
-                <td><input type="number" value="${amt}" class="cfg-item-amt" style="width:110px; padding:4px; font-weight:bold;"></td>
-                <td style="text-align:center;"><button type="button" class="btn btn-action btn-danger" onclick="this.closest('tr').remove()">🗑️ Delete</button></td>
+                <td><input type="text" value="${cat}" class="cfg-item-cat" style="width:50px; text-align:center;"></td>
+                <td><input type="number" value="${minA}" class="cfg-item-min-area" style="width:90px;"></td>
+                <td><input type="number" value="${maxA}" class="cfg-item-max-area" style="width:90px;"></td>
+                <td><input type="number" value="${minD}" class="cfg-item-min-days" style="width:50px;"></td>
+                <td><input type="number" value="${maxD}" class="cfg-item-max-days" style="width:50px;"></td>
+                <td><input type="number" value="${amt}" class="cfg-item-amt" style="width:110px; font-weight:bold;"></td>
+                <td style="text-align:center;"><button type="button" class="btn btn-action btn-danger" onclick="this.closest('tr').remove()">🗑️</button></td>
             `;
             tbody.appendChild(tr);
         }
 
-        function addNewCriteriaRow() {
-            appendConfigRowHTML("D", 0, 5000, 3, 5, 50000);
-        }
-
-        function closeSlabsConfigModal() {
-            document.getElementById('slabsConfigModal').style.display = 'none';
-        }
+        function addNewCriteriaRow() { appendConfigRowHTML("D", 0, 5000, 3, 5, 50000); }
+        function closeSlabsConfigModal() { document.getElementById('slabsConfigModal').style.display = 'none'; }
 
         function saveSlabsTableConfig() {
             if(!isAdmin) return;
             var rows = document.querySelectorAll('.config-row-item');
             var updatedMatrix = [];
-            
             rows.forEach(function(row) {
-                var cat = row.querySelector('.cfg-item-cat').value;
-                var minA = Number(row.querySelector('.cfg-item-min-area').value);
-                var maxA = Number(row.querySelector('.cfg-item-max-area').value);
-                var minD = Number(row.querySelector('.cfg-item-min-days').value);
-                var maxD = Number(row.querySelector('.cfg-item-max-days').value);
-                var amt = Number(row.querySelector('.cfg-item-amt').value);
-                
                 updatedMatrix.push({
-                    category: cat, minArea: minA, maxArea: maxA, minDays: minD, maxDays: maxD, amt: amt
+                    category: row.querySelector('.cfg-item-cat').value,
+                    minArea: Number(row.querySelector('.cfg-item-min-area').value),
+                    maxArea: Number(row.querySelector('.cfg-item-max-area').value),
+                    minDays: Number(row.querySelector('.cfg-item-min-days').value),
+                    maxDays: Number(row.querySelector('.cfg-item-max-days').value),
+                    amt: Number(row.querySelector('.cfg-item-amt').value)
                 });
             });
-            
-            slabsConfigDb.set(updatedMatrix, function(error) {
-                if(!error) {
-                    alert("✓ Matrix Engine updated! Criteria table configurations refreshed successfully.");
-                    closeSlabsConfigModal();
-                    buildDynamicSlabButtonsHTML();
-                    evaluateCurrentSlabMatch();
-                }
+            slabsConfigDb.set(updatedMatrix, function(err) {
+                if(!err) { alert("Matrix configuration updated!"); closeSlabsConfigModal(); }
             });
         }
 
@@ -552,12 +605,9 @@
                     document.getElementById("admin-finance-dashboard").style.display = "grid";
                     document.getElementById("excel-btn").style.display = "inline-flex";
                 } else {
-                    resetAdminVisibility();
-                    alert("Invalid Password.");
+                    resetAdminVisibility(); alert("Invalid Password.");
                 }
-            } else {
-                resetAdminVisibility();
-            }
+            } else { resetAdminVisibility(); }
             renderGlobalConfigUI();
             renderAllComponents();
         }
@@ -589,12 +639,7 @@
             currentCalcMode = mode;
             document.getElementById('mode-auto').classList.toggle('active', mode === 'auto');
             document.getElementById('mode-manual').classList.toggle('active', mode === 'manual');
-            
-            if (mode === 'manual') {
-                document.getElementById('slab-hint-msg').innerText = "✍️ Pure Manual Entry Mode Active: Category rules validation paused. Click any button or enter custom values.";
-            } else {
-                evaluateCurrentSlabMatch();
-            }
+            if (mode === 'auto') { evaluateCurrentSlabMatch(); }
         }
 
         function executeSlabClick(idx, amount, cat, minArea, maxArea, minDays, maxDays) {
@@ -602,7 +647,6 @@
                 var el = document.getElementById('btn-matrix-slab-' + i);
                 if(el) el.classList.remove('selected');
             });
-            
             var clickedEl = document.getElementById('btn-matrix-slab-' + idx);
             if(clickedEl) clickedEl.classList.add('selected');
 
@@ -611,16 +655,13 @@
 
             if (currentCalcMode === 'auto') {
                 if (area < minArea || area > maxArea || days < minDays || days > maxDays) {
-                    document.getElementById('slab-hint-msg').innerText = `⚠️ Warning: Camp Specs (${area} SqFt, ${days} Days) do not match Category ${cat} limits. Enable Manual Mode to force override.`;
-                    resetFinancialFields();
+                    document.getElementById('slab-hint-msg').innerText = `⚠️ Specifications mismatch Category ${cat} parameters.`;
                     return;
                 }
             }
-
             document.getElementById('form-gia').value = amount;
             document.getElementById('form-adv').value = amount * 0.50;
             document.getElementById('form-rem').value = amount * 0.50;
-            document.getElementById('slab-hint-msg').innerText = `✓ Success: Loaded Category ${cat} allocation grant: ₹${amount.toLocaleString('en-IN')}`;
         }
 
         function evaluateCurrentSlabMatch() {
@@ -633,43 +674,25 @@
                 if(el) el.classList.remove('selected');
             });
 
-            if(days <= 0 || area <= 0) {
-                document.getElementById('slab-hint-msg').innerText = "💡 Fill Camp Area & Days first to view matched allocation automatically.";
-                return;
-            }
-
             var matchedIndex = -1;
             for(var i=0; i < currentSlabsMatrix.length; i++) {
                 var row = currentSlabsMatrix[i];
                 if(area >= row.minArea && area <= row.maxArea && days >= row.minDays && days <= row.maxDays) {
-                    matchedIndex = i;
-                    break;
+                    matchedIndex = i; break;
                 }
             }
-
             if(matchedIndex > -1) {
                 var targetBtn = document.getElementById('btn-matrix-slab-' + matchedIndex);
                 if(targetBtn) targetBtn.classList.add('selected');
-                document.getElementById('slab-hint-msg').innerText = `🔍 Matrix Rule Matched Category ${currentSlabsMatrix[matchedIndex].category}! Click highlighted box to fill values.`;
-            } else {
-                document.getElementById('slab-hint-msg').innerText = "❌ No Category matched the current Area & Days combination. Check/Edit criteria tables.";
             }
         }
 
         function manualFinancialTrigger() {
-            if (currentCalcMode === 'manual') {
-                document.getElementById('slab-hint-msg').innerText = "✍️ Custom manual inputs entered. Auto matrix limits validation paused.";
-            } else {
+            if (currentCalcMode === 'auto') {
                 var gia = Number(document.getElementById('form-gia').value || 0);
                 document.getElementById('form-adv').value = gia * 0.50;
                 document.getElementById('form-rem').value = gia * 0.50;
             }
-        }
-
-        function resetFinancialFields() {
-            document.getElementById('form-gia').value = 0;
-            document.getElementById('form-adv').value = 0;
-            document.getElementById('form-rem').value = 0;
         }
 
         function calculateDashboardSummary(activeList) {
@@ -695,11 +718,10 @@
             var filterArea = document.getElementById('filter-area').value;
 
             var filtered = samitiList.filter(function(s) {
-                var appidStr = s.appid ? s.appid.toLowerCase() : '';
                 var fileStr = s.nw_file ? String(s.nw_file).toLowerCase() : '';
-                var matchSearch = s.name.toLowerCase().indexOf(searchName) > -1 || 
-                                  appidStr.indexOf(searchName) > -1 || 
-                                  fileStr.indexOf(searchName) > -1;
+                var samitiNameStr = s.name ? s.name.toLowerCase() : '';
+                var recNameStr = s.rec_name ? s.rec_name.toLowerCase() : '';
+                var matchSearch = samitiNameStr.indexOf(searchName) > -1 || fileStr.indexOf(searchName) > -1 || recNameStr.indexOf(searchName) > -1;
                 var matchArea = filterArea === "" || s.subdiv === filterArea;
                 return matchSearch && matchArea;
             });
@@ -714,90 +736,144 @@
             var bodyTbody = document.getElementById('matrix-body');
             if(!headerTr || !bodyTbody) return;
             
-            headerTr.innerHTML = `<th>S. No.</th><th>Samiti Name</th><th>Sub Division</th>`;
             var targetDataset = (activeTab === 'noc') ? nocDepartments : checklistItems;
             var targetIds = Object.keys(targetDataset);
-            
+
+            var headerHTML = `<th>S.No.</th><th>NW File No.</th><th>Samiti Name</th>`;
             targetIds.forEach(function(id) {
-                var th = document.createElement('th');
-                th.innerText = targetDataset[id].name;
-                th.style.textAlign = 'center';
-                headerTr.appendChild(th);
+                headerHTML += `<th style="text-align:center;">${targetDataset[id].name}</th>`;
             });
+            
+            if(activeTab === 'noc') {
+                headerHTML += `<th style="text-align:center; background:#fef3c7;">Remarks Review</th>`;
+                headerHTML += `<th style="text-align:center; background:#e0f2fe;">Final NOC Status</th>`;
+            }
+            headerTr.innerHTML = headerHTML;
 
             var html = '';
             filteredList.forEach(function(s, idx) {
                 html += `<tr>
                     <td>${idx + 1}</td>
-                    <td><b>${s.name}</b></td>
-                    <td><span style="color:#6b7280;">${s.subdiv}</span></td>`;
+                    <td><b>${s.nw_file || '-'}</b></td>
+                    <td><b>${s.name || '-'}</b></td>`;
                 
+                // AUTOMATED ENGINE FIX: Track explicitly if all requirements are globally met
+                var globalAllClear = true; 
+
                 targetIds.forEach(function(tId) {
-                    var isChecked = false;
-                    if(activeTab === 'noc' && s.nocs && s.nocs[tId] === true) isChecked = true;
-                    if(activeTab === 'items' && s.items && s.items[tId] === true) isChecked = true;
-                    
-                    var badgeClass = (activeTab === 'noc') ? 
-                        (isChecked ? 'noc-badge noc-received' : 'noc-badge noc-pending') : 
-                        (isChecked ? 'item-badge item-yes' : 'item-badge item-no');
-                    var badgeLabel = (activeTab === 'noc') ? 
-                        (isChecked ? '✓ Cleared' : '✗ Pending') : 
-                        (isChecked ? '✓ Verified' : '✗ Missing');
-                    
-                    var inputControl = isAdmin ? `<input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStateValue('${s.fbKey}', '${tId}', this.checked)" style="margin-right:5px; cursor:pointer;">` : '';
-                    
-                    html += `<td style="text-align:center;">
-                        <div style="display:flex; align-items:center; justify-content:center;">
-                            ${inputControl} <span class="${badgeClass}">${badgeLabel}</span>
-                        </div>
-                    </td>`;
+                    if(activeTab === 'noc') {
+                        var state = (s.nocs && s.nocs[tId]) ? s.nocs[tId] : "Pending";
+                        
+                        // Engine check logic override
+                        if(state !== "Granted" && state !== "Not Pertains") { 
+                            globalAllClear = false; 
+                        }
+
+                        var badgeClass = "badge-pending";
+                        if(state === "Granted") badgeClass = "badge-granted";
+                        if(state === "Not Recommended") badgeClass = "badge-notrec";
+                        if(state === "Not Pertains") badgeClass = "badge-notpert";
+
+                        var controlHTML = '';
+                        if(isAdmin) {
+                            controlHTML = `<select class="grid-select" onchange="updateNocOptionState('${s.fbKey}', '${tId}', this.value)">
+                                <option value="Pending" ${state==='Pending'?'selected':''}>Pending</option>
+                                <option value="Granted" ${state==='Granted'?'selected':''}>Granted</option>
+                                <option value="Not Recommended" ${state==='Not Recommended'?'selected':''}>Not Recommended</option>
+                                <option value="Not Pertains" ${state==='Not Pertains'?'selected':''}>Not Pertains</option>
+                            </select>`;
+                        } else {
+                            controlHTML = `<span class="${badgeClass}">${state}</span>`;
+                        }
+                        html += `<td style="text-align:center;">${controlHTML}</td>`;
+                        
+                    } else {
+                        var isChecked = (s.items && s.items[tId]) === true;
+                        var itemBadge = isChecked ? 'item-badge item-yes' : 'item-badge item-no';
+                        var itemLabel = isChecked ? '✓ Verified' : '✗ Missing';
+                        var inputControl = isAdmin ? `<input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStateValue('${s.fbKey}', '${tId}', this.checked)" style="cursor:pointer; margin-right:4px;">` : '';
+                        
+                        html += `<td style="text-align:center;">
+                            <div style="display:flex; justify-content:center; align-items:center;">
+                                ${inputControl} <span class="${itemBadge}">${itemLabel}</span>
+                            </div>
+                        </td>`;
+                    }
                 });
+                
+                if(activeTab === 'noc') {
+                    var currentRemarks = s.noc_remarks || "Pending Review";
+                    var remarksControl = isAdmin ? `<select class="grid-select" style="background:#fffbeb;" onchange="updateNocRemarksState('${s.fbKey}', this.value)">
+                            <option value="Pending Review" ${currentRemarks==='Pending Review'?'selected':''}>Pending Review</option>
+                            <option value="Approved" ${currentRemarks==='Approved'?'selected':''}>Approved</option>
+                            <option value="Rejected" ${currentRemarks==='Rejected'?'selected':''}>Rejected</option>
+                        </select>` : `<b>${currentRemarks}</b>`;
+                    
+                    html += `<td style="text-align:center; background:#fffbeb;">${remarksControl}</td>`;
+
+                    // Dynamic Real-time compute based strictly on values
+                    var finalStatusText = "Not Given";
+                    var finalClass = "final-noc-notgiven";
+                    
+                    if(globalAllClear === true && currentRemarks === "Approved") {
+                        finalStatusText = "NOC Given"; 
+                        finalClass = "final-noc-given";
+                    }
+                    html += `<td style="text-align:center; background:#e0f2fe;"><span class="${finalClass}">${finalStatusText}</span></td>`;
+                }
                 html += `</tr>`;
             });
             bodyTbody.innerHTML = html;
         }
 
-        function toggleStateValue(samitiKey, targetId, value) {
-            if(!isAdmin) return;
-            var nodeName = (activeTab === 'noc') ? "nocs" : "items";
-            db.child(samitiKey).child(nodeName).child(targetId).set(value);
-        }
+        function updateNocOptionState(samitiKey, deptId, selectedValue) { if(!isAdmin) return; db.child(samitiKey).child("nocs").child(deptId).set(selectedValue); }
+        function updateNocRemarksState(samitiKey, remarksValue) { if(!isAdmin) return; db.child(samitiKey).child("noc_remarks").set(remarksValue); }
+        function toggleStateValue(samitiKey, targetId, value) { if(!isAdmin) return; db.child(samitiKey).child("items").child(targetId).set(value); }
 
         function renderMasterTable(filteredList) {
             var thRow = document.getElementById('table-header-row');
             var tbody = document.getElementById('table-body');
-            var baseHeaders = `<th>S. No.</th><th>NW File No.</th><th>Sub Division</th><th>Application ID</th><th>Samiti Name</th><th>Location Spec</th><th>Area (SqFt)</th><th>Days</th>`;
             
+            var baseHeaders = `<th>S.No.</th><th>NW File No.</th><th>Sub Div</th><th>Recommendation Details</th><th>Samiti Name & PAN</th><th>Authorized Signatory</th><th>Camp Location</th><th>Size & Days</th><th>Expected Devotees</th><th>Exp.</th>`;
             if(isAdmin) {
-                baseHeaders += `<th>GIA Eligibility</th><th>Advance Released</th><th>Remaining Paid</th><th>Bank Details</th><th>Remarks</th><th style="text-align: center;">Actions</th>`;
-                document.getElementById('master-records-table').style.minWidth = "2200px";
-            } else {
-                document.getElementById('master-records-table').style.minWidth = "1200px";
+                baseHeaders += `<th>GIA Eligible</th><th>Advance (50%)</th><th>Remaining Bal</th><th>Bank Details</th><th style="text-align:center;">Actions</th>`;
             }
             thRow.innerHTML = baseHeaders;
 
             var html = '';
             filteredList.forEach(function(s, index) {
-                var mapLinkButton = s.map_url ? `<br><a href="${s.map_url}" target="_blank" style="color:#2563eb; text-decoration:none; font-size:11px; font-weight:bold;">📍 View Map</a>` : '';
-                var appidDisplay = s.appid ? s.appid : `<span style="color:#aaa; font-style:italic;">N/A</span>`;
+                var mapBtn = s.map_url ? `<br><a href="${s.map_url}" target="_blank" style="color:#2563eb; font-size:11px; font-weight:bold;">📍 View Map</a>` : '';
+                var durationStr = (s.duration_from && s.duration_to) ? `<small>${s.duration_from} to ${s.duration_to}</small>` : '';
+
+                var recBy = s.rec_by || 'None';
+                var recClass = 'rec-tag rec-none';
+                if(recBy === "Hon'ble Area MLA") recClass = 'rec-tag rec-mla';
+                if(recBy === "MP") recClass = 'rec-tag rec-mp';
+                if(recBy === "Cabinet Minister") recClass = 'rec-tag rec-minister';
+
+                var recDetailsHTML = `<span class="${recClass}">🎖️ ${recBy}</span>`;
+                if(recBy !== 'None') {
+                    recDetailsHTML += `<div style="font-size:11px; margin-top:2px;"><b>Name:</b> ${s.rec_name || '-'}<br><b>Const:</b> <small>${s.rec_constituency || '-'}</small></div>`;
+                }
 
                 html += `<tr>
                     <td>${index + 1}</td>
                     <td><b>${s.nw_file || '-'}</b></td>
-                    <td><b>${s.subdiv}</b></td>
-                    <td>${appidDisplay}</td>
-                    <td><b>${s.name}</b></td>
-                    <td>${s.location} ${mapLinkButton}</td>
-                    <td>${s.area_sqft || 0} Sq. Ft</td>
-                    <td>${s.days || 0} Days</td>`;
+                    <td>${s.subdiv || '-'}</td>
+                    <td>${recDetailsHTML}</td>
+                    <td><b>${s.name || '-'}</b><br><small style="color:#64748b;">PAN: ${s.pan || 'N/A'}</small></td>
+                    <td>${s.auth_person || '-'}<br><small>Mob: ${s.mobile || '-'}</small></td>
+                    <td><small>${s.location || '-'}</small> ${mapBtn}</td>
+                    <td>${s.area_sqft || 0} SqFt<br>${s.days || 0} Days<br>${durationStr}</td>
+                    <td>${Number(s.devotees || 0).toLocaleString('en-IN')}</td>
+                    <td><b>${s.experience || 'No'}</b></td>`;
                 
                 if(isAdmin) {
                     html += `<td>₹${Number(s.gia || 0).toLocaleString('en-IN')}</td>
                     <td style="color:#ea580c; font-weight:600;">₹${Number(s.adv || 0).toLocaleString('en-IN')}</td>
                     <td style="color:#059669; font-weight:600;">₹${Number(s.rem || 0).toLocaleString('en-IN')}</td>
-                    <td>${s.bank_name || '-'}<br><small>${s.bank_acc || '-'}</small></td>
-                    <td>${s.remarks || '-'}</td>
-                    <td style="text-align:center;"><button class="btn btn-blue btn-action" onclick="editSamiti('${s.fbKey}')">✏️ Edit</button><button class="btn btn-action" style="background:#dc2626; color:white;" onclick="deleteSamiti('${s.fbKey}')">🗑️ Delete</button></td>`;
+                    <td><small>${s.bank_name || '-'}<br>A/C: ${s.bank_acc || '-'}</small></td>
+                    <td style="text-align:center;"><button type="button" class="btn btn-blue btn-action" onclick="editSamiti('${s.fbKey}')">✏️ Edit</button><button type="button" class="btn btn-danger btn-action" onclick="deleteSamiti('${s.fbKey}')">🗑️</button></td>`;
                 }
                 html += `</tr>`;
             });
@@ -815,10 +891,7 @@
         }
         
         function closeModal() { document.getElementById('samitiModal').style.display = 'none'; }
-        function openNocModal() { 
-            renderGlobalConfigUI();
-            document.getElementById('nocModal').style.display = 'block'; 
-        }
+        function openNocModal() { renderGlobalConfigUI(); document.getElementById('nocModal').style.display = 'block'; }
         function closeNocModal() { document.getElementById('nocModal').style.display = 'none'; }
 
         function editSamiti(key) {
@@ -828,14 +901,28 @@
             
             document.getElementById('edit-id').value = s.fbKey;
             document.getElementById('form-nw-file').value = s.nw_file || '';
-            document.getElementById('form-subdiv').value = s.subdiv;
-            document.getElementById('form-appid').value = s.appid || '';
+            document.getElementById('form-subdiv').value = s.subdiv || 'Rohini';
+            document.getElementById('form-app-date').value = s.app_date || '';
             document.getElementById('form-status').value = s.status || 'Pending';
-            document.getElementById('form-name').value = s.name;
-            document.getElementById('form-location').value = s.location;
+            
+            document.getElementById('form-rec-by').value = s.rec_by || 'None';
+            document.getElementById('form-rec-name').value = s.rec_name || '';
+            document.getElementById('form-rec-constituency').value = s.rec_constituency || '';
+
+            document.getElementById('form-name').value = s.name || '';
+            document.getElementById('form-pan').value = s.pan || '';
+            document.getElementById('form-reg-address').value = s.reg_address || '';
+            document.getElementById('form-auth-person').value = s.auth_person || '';
+            document.getElementById('form-mobile').value = s.mobile || '';
+            document.getElementById('form-location').value = s.location || '';
             document.getElementById('form-map-url').value = s.map_url || '';
             document.getElementById('form-area-sqft').value = s.area_sqft || 0;
+            
+            document.getElementById('form-duration-from').value = s.duration_from || '';
+            document.getElementById('form-duration-to').value = s.duration_to || '';
             document.getElementById('form-days').value = s.days || 0;
+            document.getElementById('form-devotees').value = s.devotees || 0;
+            document.getElementById('form-experience').value = s.experience || 'No';
             
             setCalculationMode('manual'); 
             
@@ -857,15 +944,28 @@
             var key = document.getElementById('edit-id').value;
             
             var payload = {
-                nw_file: document.getElementById('form-nw-file').value,
+                nw_file: document.getElementById('form-nw-file').value.trim(),
                 subdiv: document.getElementById('form-subdiv').value,
-                appid: document.getElementById('form-appid').value, 
+                app_date: document.getElementById('form-app-date').value,
                 status: document.getElementById('form-status').value,
+                
+                rec_by: document.getElementById('form-rec-by').value,
+                rec_name: document.getElementById('form-rec-name').value.trim(),
+                rec_constituency: document.getElementById('form-rec-constituency').value.trim(),
+
                 name: document.getElementById('form-name').value,
+                pan: document.getElementById('form-pan').value.toUpperCase(),
+                reg_address: document.getElementById('form-reg-address').value,
+                auth_person: document.getElementById('form-auth-person').value,
+                mobile: document.getElementById('form-mobile').value,
                 location: document.getElementById('form-location').value,
                 map_url: document.getElementById('form-map-url').value,
                 area_sqft: Number(document.getElementById('form-area-sqft').value || 0),
+                duration_from: document.getElementById('form-duration-from').value,
+                duration_to: document.getElementById('form-duration-to').value,
                 days: Number(document.getElementById('form-days').value || 0),
+                devotees: Number(document.getElementById('form-devotees').value || 0),
+                experience: document.getElementById('form-experience').value,
                 gia: Number(document.getElementById('form-gia').value || 0),
                 adv: Number(document.getElementById('form-adv').value || 0),
                 rem: Number(document.getElementById('form-rem').value || 0),
@@ -880,36 +980,30 @@
                 var match = samitiList.find(item => item.fbKey === key);
                 if(match && match.nocs) payload.nocs = match.nocs;
                 if(match && match.items) payload.items = match.items;
+                if(match && match.noc_remarks) payload.noc_remarks = match.noc_remarks;
                 db.child(key).set(payload);
             } else {
+                payload.noc_remarks = "Pending Review";
                 db.push(payload);
             }
             closeModal();
         }
 
-        function deleteSamiti(key) {
-            if(!isAdmin) return;
-            if(confirm("⚠️ Are you sure you want to delete this row permanently?")) {
-                db.child(key).remove();
-            }
-        }
-
-        var _0x5391=["\x4e\x57\x2d\x30\x30\x31","\x6c\x65\x6e\x67\x74\x68","\x6e\x77\x5f\x66\x69\x6c\x65","\x73\x74\x72\x69\x6e\x67","\x73\x74\x61\x72\x74\x73\x57\x69\x74\x68","\x2d","\x73\x70\x6c\x69\x74","\x70\x61\x72\x73\x65\x49\x6e\x74","\x66\x6f\x72\x45\x61\x63\x68","\x70\x61\x64\x53\x74\x61\x72\x74","\x6d\x61\x70\x5f\x75\x72\x6c","\x61\x70\x70\x69\x64","\x74\x6f\x4c\x6f\x77\x65\x72\x43\x61\x73\x65","\x69\x6e\x64\x65\x78\x4f\x66","\x73\x75\x62\x64\x69\x76","\x66\x69\x6c\x74\x65\x72","\x6e\x6f\x63\x73","\x69\x74\x65\x6d\x73","\x61\x63\x74\x69\x76\x65","\x74\x6f\x67\x67\x6c\x65","\x63\x68\x65\x63\x6b\x65\x64","\x61\x64\x6d\x69\x6e\x2d\x6d\x6f\x64\x65","\x67\x65\x74\x45\x6c\x65\x6d\x65\x6e\x74\x42\x79\x49\x64","\x70\x72\x6f\x6d\x70\x74","\x64\x65\x6c\x68\x69\x32\x30\x32\x36","\x69\x6e\x6c\x69\x6e\x65\x2d\x62\x6c\x6f\x63\x6b","\x73\x74\x79\x6c\x65","\x64\x69\x73\x70\x6c\x61\x79","\x61\x64\x64\x2d\x62\x74\x6e","\x6d\x61\x6e\x61\x67\x65\x2d\x6e\x6f\x63\x2d\x62\x74\x6e","\x63\x6f\x6e\x66\x69\x67\x2d\x73\x6c\x61\x62\x73\x2d\x62\x74\x6e","\x67\x72\x69\x64","\x61\x64\x6d\x69\x6e\x2d\x66\x69\x6e\x61\x6e\x63\x65\x2d\x64\x61\x73\x68\x62\x6f\x61\x72\x64","\x69\x6e\x6c\x69\x6e\x65\x2d\x66\x6c\x65\x78","\x65\x7a\x63\x65\x6c\x2d\x62\x74\x6e","\x49\x6e\x76\x61\x6c\x69\x6d\x20\x50\x61\x73\x73\x77\x6f\x72\x64\x2e","\x61\x6c\x65\x72\x74","\x6e\x6f\x6e\x65"];
+        function deleteSamiti(key) { if(!isAdmin) return; if(confirm("Permanently delete this row record?")) { db.child(key).remove(); } }
 
         function exportToExcel() {
             if(!isAdmin) return;
             var wsData = samitiList.map(function(s, idx) {
                 return {
-                    "S. No.": idx + 1, "NW File No.": s.nw_file, "Sub Division": s.subdiv,
-                    "Application ID": s.appid || 'N/A', "Samiti Name": s.name, "Location": s.location,
-                    "Area (SqFt)": s.area_sqft, "Days": s.days,
-                    "GIA Eligibility": s.gia, "Advance Released": s.adv, "Remaining Paid": s.rem,
-                    "Bank Name": s.bank_name, "Account Number": s.bank_acc, "Remarks": s.remarks
+                    "S.No.": idx + 1, "NW File No.": s.nw_file, "Sub Division": s.subdiv, "Recommendation By": s.rec_by, "Dignitary Name": s.rec_name, "Constituency": s.rec_constituency, "Application Date": s.app_date,
+                    "Samiti Name": s.name, "PAN No": s.pan, "Reg Address": s.reg_address, "Authorized Person": s.auth_person,
+                    "Mobile": s.mobile, "Proposed Location": s.location, "Area (SqFt)": s.area_sqft, "Days": s.days,
+                    "Expected Devotees": s.devotees, "Prev Experience": s.experience, "GIA Grant": s.gia, "Advance released": s.adv
                 }
             });
             var worksheet = XLSX.utils.json_to_sheet(wsData); var workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Master Sheet");
-            XLSX.writeFile(workbook, "Kanwar_Samiti_Master_Report.xlsx");
+            XLSX.writeFile(workbook, "Kanwar_Samiti_Comprehensive_Report.xlsx");
         }
     </script>
 </body>
