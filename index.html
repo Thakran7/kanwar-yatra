@@ -93,6 +93,17 @@
         .rec-mp { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
         .rec-minister { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
         .rec-none { background: #f1f5f9; color: #475569; }
+
+        /* Public users ke liye Admin-Only features hide karne ke liye */
+body:not(.admin-active) .admin-only-view,
+body:not(.admin-active) .admin-only-col,
+body:not(.admin-active) #config-slabs-btn,
+body:not(.admin-active) #manage-noc-btn,
+body:not(.admin-active) #add-btn,
+body:not(.admin-active) #excel-btn,
+body:not(.admin-active) .btn-action {
+    display: none !important;
+}
     </style>
 </head>
 <body>
@@ -587,31 +598,53 @@
         }
 
         function toggleTableSection() {
-            var wrapper = document.getElementById('table-section-wrapper');
-            var btn = document.getElementById('trigger-view-btn');
-            wrapper.style.display = (wrapper.style.display === 'none' || wrapper.style.display === '') ? 'block' : 'none';
-            btn.innerText = (wrapper.style.display === 'block') ? "📁 Hide Master Portal Records" : "📁 Open Master Portal Records (Click Here)";
-        }
+    // ⛔ Public user ko yahan roak (stop) diya jayega
+    if (!isAdmin) {
+        alert("⛔ Access Denied: Yeh section sirf Admin ke liye hai. Kripya Admin Mode login karein.");
+        return; // Execution stops here
+    }
+
+    var wrapper = document.getElementById('table-section-wrapper');
+    var btn = document.getElementById('trigger-view-btn');
+    
+    if (wrapper.style.display === "none" || wrapper.style.display === "") {
+        wrapper.style.display = "block";
+        btn.innerText = "📂 Close Master Portal Records";
+    } else {
+        wrapper.style.display = "none";
+        btn.innerText = "📁 Open Master Portal Records (Click Here)";
+    }
+}
 
         function toggleAdminMode() {
-            var checkbox = document.getElementById("admin-mode");
-            if (checkbox.checked) {
-                var enteredPass = prompt("Enter Secret Admin Password:");
-                if (enteredPass === MASTER_PASSWORD) {
-                    isAdmin = true;
-                    document.getElementById("add-btn").style.display = "inline-block";
-                    document.getElementById("manage-noc-btn").style.display = "inline-block";
-                    document.getElementById("config-slabs-btn").style.display = "inline-block";
-                    document.getElementById("admin-finance-dashboard").style.display = "grid";
-                    document.getElementById("excel-btn").style.display = "inline-flex";
-                } else {
-                    resetAdminVisibility(); alert("Invalid Password.");
-                }
-            } else { resetAdminVisibility(); }
-            renderGlobalConfigUI();
-            renderAllComponents();
+    var checkEl = document.getElementById('admin-mode');
+    if (checkEl.checked) {
+        var pwd = prompt("Enter Master Admin Password:");
+        if (pwd === MASTER_PASSWORD) {
+            isAdmin = true;
+            document.body.classList.add('admin-active');
+            alert("✅ Admin Access Granted! All Master Records Unlocked.");
+        } else {
+            alert("❌ Incorrect Password!");
+            checkEl.checked = false;
+            isAdmin = false;
+            document.body.classList.remove('admin-active');
         }
-
+    } else {
+        isAdmin = false;
+        document.body.classList.remove('admin-active');
+        
+        // Admin logout hone par section stop/close ho jayega
+        var wrapper = document.getElementById('table-section-wrapper');
+        if (wrapper) wrapper.style.display = "none";
+        
+        var btn = document.getElementById('trigger-view-btn');
+        if (btn) btn.innerText = "📁 Open Master Portal Records (Click Here)";
+        
+        alert("🔒 Logged out from Admin Mode.");
+    }
+    renderAllComponents();
+}
         function resetAdminVisibility() {
             isAdmin = false;
             document.getElementById("admin-mode").checked = false;
