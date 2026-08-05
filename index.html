@@ -96,14 +96,13 @@
 
         /* Public users ke liye Admin-Only features hide karne ke liye */
 body:not(.admin-active) .admin-only-view,
-body:not(.admin-active) .admin-only-col,
-body:not(.admin-active) #notice-btn,        
+body:not(.admin-active) .admin-only-col,    
 body:not(.admin-active) #config-slabs-btn,
 body:not(.admin-active) #manage-noc-btn,
 body:not(.admin-active) #add-btn,
 body:not(.admin-active) #excel-btn,
 body:not(.admin-active) .btn-action {
-    display: none !important;
+    display: inline-block !important;
 }
     </style>
 </head>
@@ -762,7 +761,6 @@ function saveNoticeTicker() {
             document.getElementById("admin-mode").checked = false;
             document.getElementById("add-btn").style.display = "none";
             document.getElementById("manage-noc-btn").style.display = "none";
-            document.getElementById("notice-btn").style.display = "none";
             document.getElementById("config-slabs-btn").style.display = "none";
             document.getElementById("admin-finance-dashboard").style.display = "none";
             document.getElementById("excel-btn").style.display = "none";
