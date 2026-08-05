@@ -97,6 +97,7 @@
         /* Public users ke liye Admin-Only features hide karne ke liye */
 body:not(.admin-active) .admin-only-view,
 body:not(.admin-active) .admin-only-col,
+body:not(.admin-active) #notice-btn,        
 body:not(.admin-active) #config-slabs-btn,
 body:not(.admin-active) #manage-noc-btn,
 body:not(.admin-active) #add-btn,
@@ -115,9 +116,9 @@ body:not(.admin-active) .btn-action {
                 <input type="checkbox" id="admin-mode" onchange="toggleAdminMode()"> 🔐 Admin Access
             </label>
             <button id="notice-btn" onclick="openNoticeModal()" class="btn btn-orange admin-only-view">📢 Update Notice Ticker</button>
-            <button id="config-slabs-btn" onclick="openSlabsConfigModal()" class="btn btn-dark" style="display:none;">🛠️ Configure Criteria Table Editor</button>
-            <button id="manage-noc-btn" onclick="openNocModal()" class="btn btn-purple" style="display:none;">⚙️ Global Config (NOC/Amenities)</button>
-            <button id="add-btn" onclick="openModal()" class="btn btn-green" style="display:none;">➕ Add New Samiti</button>
+            <button id="config-slabs-btn" onclick="openSlabsConfigModal()" class="btn btn-dark" >🛠️ Configure Criteria Table Editor</button>
+            <button id="manage-noc-btn" onclick="openNocModal()" class="btn btn-purple" >⚙️ Global Config (NOC/Amenities)</button>
+            <button id="add-btn" onclick="openModal()" class="btn btn-green" >➕ Add New Samiti</button>
         </div>
     </div>
 <!-- DYNAMIC SCROLLING NEWS TICKER -->
