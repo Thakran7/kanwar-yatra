@@ -996,9 +996,15 @@
             var thRow = document.getElementById('table-header-row');
             var tbody = document.getElementById('table-body');
             
-            var baseHeaders = `<th>S.No.</th><th>NW File No.</th><th>Sub Div</th><th>Category</th><th>Recommendation Details</th><th>Samiti Name & PAN</th><th>Authorized Signatory</th><th>Camp Location</th><th>Size & Days</th><th>Expected Devotees</th><th>Exp.</th>`;
+            // 1. Column Headers: Actions column ko left side (S.No. ke baad) add kiya gaya hai
+            var baseHeaders = `<th>S.No.</th>`;
             if(isAdmin) {
-                baseHeaders += `<th>GIA Eligible</th><th>Advance (50%)</th><th>Remaining Bal</th><th>Bank Details</th><th style="text-align:center;">Actions</th>`;
+                baseHeaders += `<th style="text-align:center;">Actions</th>`;
+            }
+            baseHeaders += `<th>NW File No.</th><th>Sub Div</th><th>Category</th><th>Recommendation Details</th><th>Samiti Name & PAN</th><th>Authorized Signatory</th><th>Camp Location</th><th>Size & Days</th><th>Expected Devotees</th><th>Exp.</th>`;
+            
+            if(isAdmin) {
+                baseHeaders += `<th>GIA Eligible</th><th>Advance (50%)</th><th>Remaining Bal</th><th>Bank Details</th>`;
             }
             thRow.innerHTML = baseHeaders;
 
@@ -1021,9 +1027,15 @@
                 var catType = s.category_type || 'GIA';
                 var catBadge = catType === 'GIA' ? `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-weight:bold;">💰 GIA</span>` : `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-weight:bold;">📋 NOC</span>`;
 
+                // 2. Row Data: Actions buttons cell (Edit/Delete) S.No. ke baad left side render honge
                 html += `<tr>
-                    <td>${index + 1}</td>
-                    <td><b>${s.nw_file || '-'}</b></td>
+                    <td>${index + 1}</td>`;
+                
+                if(isAdmin) {
+                    html += `<td style="text-align:center;"><button type="button" class="btn btn-blue btn-action" onclick="editSamiti('${s.fbKey}')">✏️ Edit</button><button type="button" class="btn btn-danger btn-action" onclick="deleteSamiti('${s.fbKey}')">🗑️</button></td>`;
+                }
+
+                html += `<td><b>${s.nw_file || '-'}</b></td>
                     <td>${s.subdiv || '-'}</td>
                     <td>${catBadge}</td>
                     <td>${recDetailsHTML}</td>
@@ -1038,8 +1050,7 @@
                     html += `<td>₹${Number(s.gia || 0).toLocaleString('en-IN')}</td>
                     <td style="color:#ea580c; font-weight:600;">₹${Number(s.adv || 0).toLocaleString('en-IN')}</td>
                     <td style="color:#059669; font-weight:600;">₹${Number(s.rem || 0).toLocaleString('en-IN')}</td>
-                    <td><small>${s.bank_name || '-'}<br>A/C: ${s.bank_acc || '-'}</small></td>
-                    <td style="text-align:center;"><button type="button" class="btn btn-blue btn-action" onclick="editSamiti('${s.fbKey}')">✏️ Edit</button><button type="button" class="btn btn-danger btn-action" onclick="deleteSamiti('${s.fbKey}')">🗑️</button></td>`;
+                    <td><small>${s.bank_name || '-'}<br>A/C: ${s.bank_acc || '-'}</small></td>`;
                 }
                 html += `</tr>`;
             });
