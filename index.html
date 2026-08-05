@@ -74,6 +74,7 @@
         .matrix-toggle-btn.active { background: #ea580c; color: white; border-color: #ea580c; }
         
         .admin-only-view { display: none; }
+        .admin-only-col { display: none; }
         .slab-hint { font-size: 11px; color: #b45309; margin-top: 4px; font-weight: 500; }
         
         .mode-switch-container { display: flex; background: #e2e8f0; padding: 4px; border-radius: 6px; margin-bottom: 10px; max-width: 450px; gap: 5px; }
@@ -94,16 +95,24 @@
         .rec-minister { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
         .rec-none { background: #f1f5f9; color: #475569; }
 
-        /* Public users ke liye Admin-Only features hide karne ke liye */
-body:not(.admin-active) .admin-only-view,
-body:not(.admin-active) .admin-only-col,    
-body:not(.admin-active) #config-slabs-btn,
-body:not(.admin-active) #manage-noc-btn,
-body:not(.admin-active) #add-btn,
-body:not(.admin-active) #excel-btn,
-body:not(.admin-active) .btn-action {
-    display: none; !important;
-}
+        body:not(.admin-active) .admin-only-view,
+        body:not(.admin-active) .admin-only-col,    
+        body:not(.admin-active) #config-slabs-btn,
+        body:not(.admin-active) #manage-noc-btn,
+        body:not(.admin-active) #add-btn,
+        body:not(.admin-active) .btn-action {
+            display: none !important;
+        }
+
+        @media print {
+            .navbar, .controls-panel, .matrix-toggle-container, .admin-box, #notice-btn, #trigger-view-btn, .btn-action, marquee {
+                display: none !important;
+            }
+            body { background: white !important; color: black !important; }
+            .container { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .table-container { box-shadow: none !important; overflow: visible !important; }
+            table { font-size: 10px !important; width: 100% !important; }
+        }
     </style>
 </head>
 <body>
@@ -120,19 +129,15 @@ body:not(.admin-active) .btn-action {
             <button id="add-btn" onclick="openModal()" class="btn btn-green" >➕ Add New Samiti</button>
         </div>
     </div>
-<!-- DYNAMIC SCROLLING NEWS TICKER -->
-<div style="background: #fff7ed; border: 1px solid #fdba74; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-    <span style="background: #ea580c; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap;">📢 LATEST ADVISORY</span>
-    <marquee id="ticker-text" style="font-size: 13px; color: #9a3412; font-weight: 600;" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
-        Loading latest advisory announcements...
-    </marquee>
-</div>
 
+    <!-- DYNAMIC SCROLLING NEWS TICKER -->
+    <div style="background: #fff7ed; border: 1px solid #fdba74; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <span style="background: #ea580c; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap;">📢 LATEST ADVISORY</span>
+        <marquee id="ticker-text" style="font-size: 13px; color: #9a3412; font-weight: 600;" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+            Loading latest advisory announcements...
+        </marquee>
+    </div>
 
-
-
-
-    
     <div class="container">
         <!-- Live Count Dashboard -->
         <div class="grid-4">
@@ -140,6 +145,19 @@ body:not(.admin-active) .btn-action {
             <div class="card card-approved"><p>Approved Applications</p><h2 id="dash-approved" style="color: #16a34a;">0</h2></div>
             <div class="card card-pending"><p>Pending Review</p><h2 id="dash-pending" style="color: #d97706;">0</h2></div>
             <div class="card card-rejected"><p>Rejected</p><h2 id="dash-rejected" style="color: #dc2626;">0</h2></div>
+        </div>
+
+        <!-- DASHBOARD FILE EDIT PANEL (ADMIN ONLY) -->
+        <div class="admin-only-view" style="background: #ffffff; border: 2px solid #2563eb; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="font-size: 18px;">✏️</span>
+                <h3 style="margin: 0; color: #1e3a8a; font-size: 16px;">Quick File Edit (Admin Dashboard)</h3>
+            </div>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: #475569;">Enter File Number to edit Samiti details directly from Dashboard:</p>
+            <div style="display: flex; gap: 10px; max-width: 500px;">
+                <input type="text" id="dash-edit-file-no" placeholder="Enter NW File No. (e.g. NW-001)" style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold;">
+                <button type="button" onclick="quickEditFileFromDash()" class="btn btn-blue">✏️ Edit File</button>
+            </div>
         </div>
 
         <!-- Financial Summary Dashboard -->
@@ -150,32 +168,29 @@ body:not(.admin-active) .btn-action {
         </div>
 
         <!-- DYNAMIC GIA vs NOC BREAKDOWN BAR -->
-<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; gap: 15px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="background: #059669; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
-            💰 GIA Applicant Samitis: <span id="gia-count-badge">0</span>
-        </span>
-        <span style="background: #475569; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
-            📋 Only NOC Samitis: <span id="non-gia-count-badge">0</span>
-        </span>
-    </div>
-    
-    <!-- Admin Filter Toggle -->
-    <div class="admin-only-view">
-        <label style="font-size: 13px; font-weight: bold; color: #334155; cursor: pointer;">
-            <input type="checkbox" id="gia-only-filter" onchange="renderMasterTable()"> 🎯 Show Only GIA Samitis
-        </label>
-    </div>
-</div>
-
-
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; gap: 15px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="background: #059669; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
+                    💰 GIA Applicant Samitis: <span id="gia-count-badge">0</span>
+                </span>
+                <span style="background: #475569; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
+                    📋 Only NOC Samitis: <span id="non-gia-count-badge">0</span>
+                </span>
+            </div>
+            
+            <div class="admin-only-view">
+                <label style="font-size: 13px; font-weight: bold; color: #334155; cursor: pointer;">
+                    <input type="checkbox" id="gia-only-filter" onchange="renderAllComponents()"> 🎯 Show Only GIA Samitis
+                </label>
+            </div>
+        </div>
         
         <div style="text-align: center; margin: 20px 0;">
             <button onclick="toggleTableSection()" class="btn btn-orange" id="trigger-view-btn">📁 Open Master Portal Records (Click Here)</button>
         </div>
 
         <div class="table-section-wrapper" id="table-section-wrapper">
-            <!-- Filters -->
+            <!-- Filters & Buttons -->
             <div class="controls-panel">
                 <input type="text" id="search-name" oninput="filterAllData()" placeholder="🔍 Search by Samiti Name, App ID, MLA/MP Name..." class="search-input">
                 <select id="filter-area" onchange="filterAllData()" class="filter-select">
@@ -185,7 +200,7 @@ body:not(.admin-active) .btn-action {
                     <option value="Kirari">Kirari</option>
                 </select>
                 <div style="display: flex; gap: 10px; margin-left: auto;">
-                    <button id="excel-btn" onclick="exportToExcel()" class="btn btn-excel admin-only-view">📊 Export Master Excel</button>
+                    <button id="excel-btn" onclick="exportToExcel()" class="btn btn-excel">📊 Export Master Excel</button>
                     <button onclick="window.print()" class="btn btn-pdf">🖨️ Print Report</button>
                 </div>
             </div>
@@ -224,7 +239,7 @@ body:not(.admin-active) .btn-action {
                 <div class="form-section">1. Identification Specs</div>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>NW File No.* (Type & Press Enter/Tab to load existings)</label>
+                        <label>NW File No.* (Type & Press Enter/Tab to load existing)</label>
                         <input type="text" id="form-nw-file" placeholder="e.g. NW-001" required onchange="handleFileNoLookup(this.value)">
                     </div>
                     <div class="form-group"><label>Sub Division*</label>
@@ -282,36 +297,14 @@ body:not(.admin-active) .btn-action {
                     </div>
                 </div>
 
-<div class="form-group" style="margin-bottom: 15px;">
-    <label style="font-weight: bold; font-size: 13px;">Application Category / Type:</label>
-    <select id="form-category-type" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <option value="GIA">💰 GIA (Grant-in-Aid + NOC)</option>
-        <option value="NOC">📋 Only NOC Permission</option>
-    </select>
-</div>
-<!-- NOTICE TICKER UPDATE MODAL -->
-<div id="noticeModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
-        <h3 style="margin:0 0 10px 0; color:#ea580c;">📢 Update Public Scrolling Notice</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">Admin dwara likha gaya text public screen par live scroll hoga.</p>
-        
-        <div class="form-group">
-            <label style="font-weight:bold; margin-bottom:5px;">Enter Scrolling Notice / Advisory Text:</label>
-            <textarea id="admin-notice-input" rows="4" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:13px;" placeholder="Type announcement here..."></textarea>
-        </div>
-        
-        <div style="text-align: right; margin-top: 15px;">
-            <button type="button" onclick="closeNoticeModal()" class="btn" style="background:#ccc; color:#333;">Cancel</button>
-            <button type="button" onclick="saveNoticeTicker()" class="btn btn-green">💾 Publish Notice Live</button>
-        </div>
-    </div>
-</div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; font-size: 13px;">Application Category / Type:*</label>
+                    <select id="form-category-type" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="GIA">💰 GIA (Grant-in-Aid + NOC)</option>
+                        <option value="NOC">📋 Only NOC Permission</option>
+                    </select>
+                </div>
 
-
-
-
-
-                
                 <div class="form-section">3. Grants & Financial Allocations</div>
                 <div class="mode-switch-container">
                     <button type="button" id="mode-auto" class="mode-btn active" onclick="setCalculationMode('auto')">🤖 Auto Check Slab Criteria</button>
@@ -348,10 +341,28 @@ body:not(.admin-active) .btn-action {
         </div>
     </div>
 
+    <!-- NOTICE TICKER UPDATE MODAL -->
+    <div id="noticeModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 style="margin:0 0 10px 0; color:#ea580c;">📢 Update Public Scrolling Notice</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Admin dwara likha gaya text public screen par live scroll hoga.</p>
+            
+            <div class="form-group">
+                <label style="font-weight:bold; margin-bottom:5px;">Enter Scrolling Notice / Advisory Text:</label>
+                <textarea id="admin-notice-input" rows="4" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:13px;" placeholder="Type announcement here..."></textarea>
+            </div>
+            
+            <div style="text-align: right; margin-top: 15px;">
+                <button type="button" onclick="closeNoticeModal()" class="btn" style="background:#ccc; color:#333;">Cancel</button>
+                <button type="button" onclick="saveNoticeTicker()" class="btn btn-green">💾 Publish Notice Live</button>
+            </div>
+        </div>
+    </div>
+
     <!-- CRITERIA TABLE EDITOR MODAL -->
     <div id="slabsConfigModal" class="modal">
         <div class="modal-content" style="max-width: 1000px;">
-            <div style="display:flex; justify-content:between; align-items:center; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="margin:0; color:#1e293b;">🛠️ Dynamic Category Matrix & Criteria Table Editor</h3>
                 <button type="button" onclick="addNewCriteriaRow()" class="btn btn-blue" style="margin-left:auto;">➕ Add New Rule Block</button>
             </div>
@@ -426,6 +437,7 @@ body:not(.admin-active) .btn-action {
         var nocDb = firebase.database().ref("noc_departments_global_v9");
         var checklistDb = firebase.database().ref("camp_checklist_global_v9");
         var slabsConfigDb = firebase.database().ref("slabs_table_matrix_setup_v9");
+        var noticeDb = firebase.database().ref("public_notice_ticker_v9");
 
         var MASTER_PASSWORD = "delhi2026";
         var samitiList = [];
@@ -434,54 +446,40 @@ body:not(.admin-active) .btn-action {
         var activeTab = 'noc'; 
         var isAdmin = false;
         var currentCalcMode = 'auto'; 
-// Firebase reference for Live Notice
-var noticeDb = firebase.database().ref("public_notice_ticker_v9");
 
-// 1. Firebase se Live Notice read karke Ticker par dikhana
-noticeDb.on("value", function(snapshot) {
-    var text = snapshot.val();
-    var tickerEl = document.getElementById('ticker-text');
-    if (tickerEl) {
-        if (text) {
-            tickerEl.innerText = text;
-        } else {
-            tickerEl.innerText = "• Welcome to District Kanwar Yatra Management Portal 2026.";
+        // Firebase Live Notice Reader
+        noticeDb.on("value", function(snapshot) {
+            var text = snapshot.val();
+            var tickerEl = document.getElementById('ticker-text');
+            if (tickerEl) {
+                tickerEl.innerText = text ? text : "• Welcome to District Kanwar Yatra Management Portal 2026.";
+            }
+        });
+
+        function openNoticeModal() {
+            var tickerText = document.getElementById('ticker-text').innerText;
+            document.getElementById('admin-notice-input').value = tickerText;
+            document.getElementById('noticeModal').style.display = 'block';
         }
-    }
-});
 
-// 2. Admin Notice Modal Open/Close Functions
-function openNoticeModal() {
-    var tickerText = document.getElementById('ticker-text').innerText;
-    document.getElementById('admin-notice-input').value = tickerText;
-    document.getElementById('noticeModal').style.display = 'block';
-}
+        function closeNoticeModal() {
+            document.getElementById('noticeModal').style.display = 'none';
+        }
 
-function closeNoticeModal() {
-    document.getElementById('noticeModal').style.display = 'none';
-}
+        function saveNoticeTicker() {
+            var newNotice = document.getElementById('admin-notice-input').value.trim();
+            if (!newNotice) {
+                alert("Please enter some text before saving!");
+                return;
+            }
+            noticeDb.set(newNotice).then(function() {
+                alert("✅ Live Scrolling Notice updated successfully!");
+                closeNoticeModal();
+            }).catch(function(error) {
+                alert("❌ Error updating notice: " + error.message);
+            });
+        }
 
-// 3. Notice text ko Firebase par save karna
-function saveNoticeTicker() {
-    var newNotice = document.getElementById('admin-notice-input').value.trim();
-    if (!newNotice) {
-        alert("Please enter some text before saving!");
-        return;
-    }
-    
-    noticeDb.set(newNotice).then(function() {
-        alert("✅ Live Scrolling Notice updated successfully!");
-        closeNoticeModal();
-    }).catch(function(error) {
-        alert("❌ Error updating notice: " + error.message);
-    });
-}
-
-
-
-
-
-        
         var currentSlabsMatrix = [
             { category: "A", minArea: 20001, maxArea: 9999999, minDays: 3, maxDays: 5, amt: 500000 },
             { category: "A", minArea: 20001, maxArea: 9999999, minDays: 6, maxDays: 12, amt: 1000000 },
@@ -528,6 +526,23 @@ function saveNoticeTicker() {
             renderAllComponents();
         });
 
+        function quickEditFileFromDash() {
+            var inputVal = document.getElementById('dash-edit-file-no').value.trim();
+            if (!inputVal) {
+                alert("Please enter a valid File Number (e.g. NW-001)");
+                return;
+            }
+            var match = samitiList.find(function(item) {
+                return item.nw_file && item.nw_file.trim().toLowerCase() === inputVal.toLowerCase();
+            });
+            
+            if (match) {
+                editSamiti(match.fbKey);
+            } else {
+                alert("❌ No record found matching File Number: " + inputVal);
+            }
+        }
+
         function handleFileNoLookup(fileNumValue) {
             if (!fileNumValue) return;
             var match = samitiList.find(function(item) {
@@ -557,6 +572,7 @@ function saveNoticeTicker() {
                 document.getElementById('form-days').value = match.days || 0;
                 document.getElementById('form-devotees').value = match.devotees || 0;
                 document.getElementById('form-experience').value = match.experience || 'No';
+                document.getElementById('form-category-type').value = match.category_type || 'GIA';
                 
                 setCalculationMode('manual'); 
                 document.getElementById('form-gia').value = match.gia || 0;
@@ -709,61 +725,50 @@ function saveNoticeTicker() {
         }
 
         function toggleTableSection() {
-    // ⛔ Public user ko yahan roak (stop) diya jayega
-    if (!isAdmin) {
-        alert("⛔ Access Denied: Yeh section sirf Admin ke liye hai. Kripya Admin Mode login karein.");
-        return; // Execution stops here
-    }
+            if (!isAdmin) {
+                alert("⛔ Access Denied: Yeh section sirf Admin ke liye hai. Kripya Admin Mode login karein.");
+                return;
+            }
 
-    var wrapper = document.getElementById('table-section-wrapper');
-    var btn = document.getElementById('trigger-view-btn');
-    
-    if (wrapper.style.display === "none" || wrapper.style.display === "") {
-        wrapper.style.display = "block";
-        btn.innerText = "📂 Close Master Portal Records";
-    } else {
-        wrapper.style.display = "none";
-        btn.innerText = "📁 Open Master Portal Records (Click Here)";
-    }
-}
+            var wrapper = document.getElementById('table-section-wrapper');
+            var btn = document.getElementById('trigger-view-btn');
+            
+            if (wrapper.style.display === "none" || wrapper.style.display === "") {
+                wrapper.style.display = "block";
+                btn.innerText = "📂 Close Master Portal Records";
+            } else {
+                wrapper.style.display = "none";
+                btn.innerText = "📁 Open Master Portal Records (Click Here)";
+            }
+        }
 
         function toggleAdminMode() {
-    var checkEl = document.getElementById('admin-mode');
-    if (checkEl.checked) {
-        var pwd = prompt("Enter Master Admin Password:");
-        if (pwd === MASTER_PASSWORD) {
-            isAdmin = true;
-            document.body.classList.add('admin-active');
-            alert("✅ Admin Access Granted! All Master Records Unlocked.");
-        } else {
-            alert("❌ Incorrect Password!");
-            checkEl.checked = false;
-            isAdmin = false;
-            document.body.classList.remove('admin-active');
-        }
-    } else {
-        isAdmin = false;
-        document.body.classList.remove('admin-active');
-        
-        // Admin logout hone par section stop/close ho jayega
-        var wrapper = document.getElementById('table-section-wrapper');
-        if (wrapper) wrapper.style.display = "none";
-        
-        var btn = document.getElementById('trigger-view-btn');
-        if (btn) btn.innerText = "📁 Open Master Portal Records (Click Here)";
-        
-        alert("🔒 Logged out from Admin Mode.");
-    }
-    renderAllComponents();
-}
-        function resetAdminVisibility() {
-            isAdmin = false;
-            document.getElementById("admin-mode").checked = false;
-            document.getElementById("add-btn").style.display = "none";
-            document.getElementById("manage-noc-btn").style.display = "none";
-            document.getElementById("config-slabs-btn").style.display = "none";
-            document.getElementById("admin-finance-dashboard").style.display = "none";
-            document.getElementById("excel-btn").style.display = "none";
+            var checkEl = document.getElementById('admin-mode');
+            if (checkEl.checked) {
+                var pwd = prompt("Enter Master Admin Password:");
+                if (pwd === MASTER_PASSWORD) {
+                    isAdmin = true;
+                    document.body.classList.add('admin-active');
+                    alert("✅ Admin Access Granted! All Master Records Unlocked.");
+                } else {
+                    alert("❌ Incorrect Password!");
+                    checkEl.checked = false;
+                    isAdmin = false;
+                    document.body.classList.remove('admin-active');
+                }
+            } else {
+                isAdmin = false;
+                document.body.classList.remove('admin-active');
+                
+                var wrapper = document.getElementById('table-section-wrapper');
+                if (wrapper) wrapper.style.display = "none";
+                
+                var btn = document.getElementById('trigger-view-btn');
+                if (btn) btn.innerText = "📁 Open Master Portal Records (Click Here)";
+                
+                alert("🔒 Logged out from Admin Mode.");
+            }
+            renderAllComponents();
         }
 
         function generateNextFileNumber() {
@@ -842,17 +847,30 @@ function saveNoticeTicker() {
         function calculateDashboardSummary(activeList) {
             var total = activeList.length, app = 0, pen = 0, rej = 0;
             var sumGia = 0, sumAdv = 0, sumRem = 0;
+            var giaCount = 0, nocOnlyCount = 0;
+
             activeList.forEach(function(s) {
                 if(s.status === 'Approved') app++; else if(s.status === 'Rejected') rej++; else pen++;
                 sumGia += Number(s.gia || 0); sumAdv += Number(s.adv || 0); sumRem += Number(s.rem || 0);
+
+                if (s.category_type === 'GIA' || Number(s.gia || 0) > 0) {
+                    giaCount++;
+                } else {
+                    nocOnlyCount++;
+                }
             });
+
             document.getElementById('dash-total').innerText = total;
             document.getElementById('dash-approved').innerText = app;
             document.getElementById('dash-pending').innerText = pen;
             document.getElementById('dash-rejected').innerText = rej;
+            
             document.getElementById('fin-total-gia').innerText = "₹" + sumGia.toLocaleString('en-IN');
             document.getElementById('fin-total-adv').innerText = "₹" + sumAdv.toLocaleString('en-IN');
             document.getElementById('fin-total-rem').innerText = "₹" + sumRem.toLocaleString('en-IN');
+
+            if (document.getElementById('gia-count-badge')) document.getElementById('gia-count-badge').innerText = giaCount;
+            if (document.getElementById('non-gia-count-badge')) document.getElementById('non-gia-count-badge').innerText = nocOnlyCount;
         }
 
         function filterAllData() { renderAllComponents(); }
@@ -860,6 +878,7 @@ function saveNoticeTicker() {
         function renderAllComponents() {
             var searchName = document.getElementById('search-name').value.toLowerCase();
             var filterArea = document.getElementById('filter-area').value;
+            var giaOnlyChecked = document.getElementById('gia-only-filter') ? document.getElementById('gia-only-filter').checked : false;
 
             var filtered = samitiList.filter(function(s) {
                 var fileStr = s.nw_file ? String(s.nw_file).toLowerCase() : '';
@@ -867,46 +886,12 @@ function saveNoticeTicker() {
                 var recNameStr = s.rec_name ? s.rec_name.toLowerCase() : '';
                 var matchSearch = samitiNameStr.indexOf(searchName) > -1 || fileStr.indexOf(searchName) > -1 || recNameStr.indexOf(searchName) > -1;
                 var matchArea = filterArea === "" || s.subdiv === filterArea;
-                return matchSearch && matchArea;
+                var matchGiaFilter = !giaOnlyChecked || (s.category_type === 'GIA' || Number(s.gia || 0) > 0);
+                
+                return matchSearch && matchArea && matchGiaFilter;
             });
 
             calculateDashboardSummary(filtered);
-function updateDashboards() {
-    var total = samitiList.length;
-    var approved = 0, pending = 0, rejected = 0;
-    var giaCount = 0, nocOnlyCount = 0;
-
-    samitiList.forEach(function(item) {
-        // Status Counts
-        if (item.status === 'Approved') approved++;
-        else if (item.status === 'Rejected') rejected++;
-        else pending++;
-
-        // Dynamic GIA vs NOC Check
-        if (item.category_type === 'GIA' || item.is_gia === 'Yes' || parseFloat(item.gia || 0) > 0) {
-            giaCount++;
-        } else {
-            nocOnlyCount++;
-        }
-    });
-
-    // Public Counts Update
-    document.getElementById('dash-total').innerText = total;
-    document.getElementById('dash-approved').innerText = approved;
-    document.getElementById('dash-pending').innerText = pending;
-    document.getElementById('dash-rejected').innerText = rejected;
-
-    // Live Dynamic Badges Update
-    if (document.getElementById('gia-count-badge')) {
-        document.getElementById('gia-count-badge').innerText = giaCount;
-    }
-    if (document.getElementById('non-gia-count-badge')) {
-        document.getElementById('non-gia-count-badge').innerText = nocOnlyCount;
-    }
-}
-
-
-            
             renderDynamicGridMatrix(filtered);
             renderMasterTable(filtered);
         }
@@ -937,14 +922,12 @@ function updateDashboards() {
                     <td><b>${s.nw_file || '-'}</b></td>
                     <td><b>${s.name || '-'}</b></td>`;
                 
-                // AUTOMATED ENGINE FIX: Track explicitly if all requirements are globally met
                 var globalAllClear = true; 
 
                 targetIds.forEach(function(tId) {
                     if(activeTab === 'noc') {
                         var state = (s.nocs && s.nocs[tId]) ? s.nocs[tId] : "Pending";
                         
-                        // Engine check logic override
                         if(state !== "Granted" && state !== "Not Pertains") { 
                             globalAllClear = false; 
                         }
@@ -991,7 +974,6 @@ function updateDashboards() {
                     
                     html += `<td style="text-align:center; background:#fffbeb;">${remarksControl}</td>`;
 
-                    // Dynamic Real-time compute based strictly on values
                     var finalStatusText = "Not Given";
                     var finalClass = "final-noc-notgiven";
                     
@@ -1014,7 +996,7 @@ function updateDashboards() {
             var thRow = document.getElementById('table-header-row');
             var tbody = document.getElementById('table-body');
             
-            var baseHeaders = `<th>S.No.</th><th>NW File No.</th><th>Sub Div</th><th>Recommendation Details</th><th>Samiti Name & PAN</th><th>Authorized Signatory</th><th>Camp Location</th><th>Size & Days</th><th>Expected Devotees</th><th>Exp.</th>`;
+            var baseHeaders = `<th>S.No.</th><th>NW File No.</th><th>Sub Div</th><th>Category</th><th>Recommendation Details</th><th>Samiti Name & PAN</th><th>Authorized Signatory</th><th>Camp Location</th><th>Size & Days</th><th>Expected Devotees</th><th>Exp.</th>`;
             if(isAdmin) {
                 baseHeaders += `<th>GIA Eligible</th><th>Advance (50%)</th><th>Remaining Bal</th><th>Bank Details</th><th style="text-align:center;">Actions</th>`;
             }
@@ -1036,10 +1018,14 @@ function updateDashboards() {
                     recDetailsHTML += `<div style="font-size:11px; margin-top:2px;"><b>Name:</b> ${s.rec_name || '-'}<br><b>Const:</b> <small>${s.rec_constituency || '-'}</small></div>`;
                 }
 
+                var catType = s.category_type || 'GIA';
+                var catBadge = catType === 'GIA' ? `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-weight:bold;">💰 GIA</span>` : `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-weight:bold;">📋 NOC</span>`;
+
                 html += `<tr>
                     <td>${index + 1}</td>
                     <td><b>${s.nw_file || '-'}</b></td>
                     <td>${s.subdiv || '-'}</td>
+                    <td>${catBadge}</td>
                     <td>${recDetailsHTML}</td>
                     <td><b>${s.name || '-'}</b><br><small style="color:#64748b;">PAN: ${s.pan || 'N/A'}</small></td>
                     <td>${s.auth_person || '-'}<br><small>Mob: ${s.mobile || '-'}</small></td>
@@ -1064,6 +1050,7 @@ function updateDashboards() {
             document.getElementById('samitiForm').reset(); 
             document.getElementById('edit-id').value = '';
             document.getElementById('form-nw-file').value = generateNextFileNumber();
+            document.getElementById('form-category-type').value = 'GIA';
             buildDynamicSlabButtonsHTML();
             setCalculationMode('auto');
             document.getElementById('modal-title').innerText = "➕ Add New Samiti Record";
@@ -1103,6 +1090,7 @@ function updateDashboards() {
             document.getElementById('form-days').value = s.days || 0;
             document.getElementById('form-devotees').value = s.devotees || 0;
             document.getElementById('form-experience').value = s.experience || 'No';
+            document.getElementById('form-category-type').value = s.category_type || 'GIA';
             
             setCalculationMode('manual'); 
             
@@ -1120,7 +1108,10 @@ function updateDashboards() {
 
         function saveSamiti(e) {
             e.preventDefault();
-            if(!isAdmin) return;
+            if(!isAdmin) {
+                alert("⛔ Permission Denied: Admin login required to save data.");
+                return;
+            }
             var key = document.getElementById('edit-id').value;
             
             var payload = {
@@ -1146,6 +1137,7 @@ function updateDashboards() {
                 days: Number(document.getElementById('form-days').value || 0),
                 devotees: Number(document.getElementById('form-devotees').value || 0),
                 experience: document.getElementById('form-experience').value,
+                category_type: document.getElementById('form-category-type').value,
                 gia: Number(document.getElementById('form-gia').value || 0),
                 adv: Number(document.getElementById('form-adv').value || 0),
                 rem: Number(document.getElementById('form-rem').value || 0),
@@ -1161,21 +1153,29 @@ function updateDashboards() {
                 if(match && match.nocs) payload.nocs = match.nocs;
                 if(match && match.items) payload.items = match.items;
                 if(match && match.noc_remarks) payload.noc_remarks = match.noc_remarks;
-                db.child(key).set(payload);
+                db.child(key).set(payload).then(function() {
+                    alert("✅ Data updated successfully!");
+                    closeModal();
+                }).catch(function(err) {
+                    alert("❌ Error: " + err.message);
+                });
             } else {
                 payload.noc_remarks = "Pending Review";
-                db.push(payload);
+                db.push(payload).then(function() {
+                    alert("✅ New Samiti record created successfully!");
+                    closeModal();
+                }).catch(function(err) {
+                    alert("❌ Error: " + err.message);
+                });
             }
-            closeModal();
         }
 
         function deleteSamiti(key) { if(!isAdmin) return; if(confirm("Permanently delete this row record?")) { db.child(key).remove(); } }
 
         function exportToExcel() {
-            if(!isAdmin) return;
             var wsData = samitiList.map(function(s, idx) {
                 return {
-                    "S.No.": idx + 1, "NW File No.": s.nw_file, "Sub Division": s.subdiv, "Recommendation By": s.rec_by, "Dignitary Name": s.rec_name, "Constituency": s.rec_constituency, "Application Date": s.app_date,
+                    "S.No.": idx + 1, "NW File No.": s.nw_file, "Sub Division": s.subdiv, "Category": s.category_type || 'GIA', "Recommendation By": s.rec_by, "Dignitary Name": s.rec_name, "Constituency": s.rec_constituency, "Application Date": s.app_date,
                     "Samiti Name": s.name, "PAN No": s.pan, "Reg Address": s.reg_address, "Authorized Person": s.auth_person,
                     "Mobile": s.mobile, "Proposed Location": s.location, "Area (SqFt)": s.area_sqft, "Days": s.days,
                     "Expected Devotees": s.devotees, "Prev Experience": s.experience, "GIA Grant": s.gia, "Advance released": s.adv
