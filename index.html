@@ -500,7 +500,25 @@
             document.getElementById('admin-notice-input').value = tickerText;
             document.getElementById('noticeModal').style.display = 'block';
         }
+<!-- NOTICE TICKER MODAL -->
+<div id="noticeModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #ea580c; padding-bottom: 8px; margin-bottom: 15px;">
+            <h3 style="margin:0; color:#ea580c;">📢 Update Advisory Ticker</h3>
+            <button type="button" onclick="closeNoticeModal()" class="btn btn-danger" style="padding: 2px 8px;">✕</button>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-weight:bold; display:block; margin-bottom:5px;">Enter Advisory / Announcement Text:</label>
+            <textarea id="noticeInputText" rows="4" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;" placeholder="Type new advisory ticker text here..."></textarea>
+        </div>
 
+        <div style="text-align: right; display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" onclick="closeNoticeModal()" class="btn" style="background:#ccc; color:#333;">Cancel</button>
+            <button type="button" onclick="saveNoticeTicker()" class="btn" style="background:#ea580c; color:white; font-weight:bold;">💾 Save & Publish Live</button>
+        </div>
+    </div>
+</div>
         function closeNoticeModal() {
             document.getElementById('noticeModal').style.display = 'none';
         }
@@ -781,15 +799,18 @@
             }
         }
 
-    function toggleAdminMode(checked) {
+   function toggleAdminMode(checked) {
     if (checked) {
         var pwd = prompt("Enter Master Password:");
-        if (pwd === "delhi2026") {
+        if (pwd === "delhi2026") { //
             isAdmin = true;
+            
+            // Show all admin buttons
             document.querySelectorAll('.admin-only').forEach(function(el) {
                 el.style.display = 'inline-block';
             });
-            // Show Notice Button on Admin Login
+            
+            // Show Notice Ticker button
             var noticeBtn = document.getElementById('notice-btn');
             if (noticeBtn) noticeBtn.style.display = 'inline-block';
             
@@ -802,17 +823,19 @@
         }
     } else {
         isAdmin = false;
+        
+        // Hide all admin buttons
         document.querySelectorAll('.admin-only').forEach(function(el) {
             el.style.display = 'none';
         });
-        // Hide Notice Button on Admin Logout
+        
+        // Hide Notice Ticker button
         var noticeBtn = document.getElementById('notice-btn');
         if (noticeBtn) noticeBtn.style.display = 'none';
         
         renderMasterTable(samitiList);
     }
 }
-
         
         function generateNextFileNumber() {
             if (samitiList.length === 0) return "NW-001";
@@ -1279,6 +1302,41 @@
         function closeCategoryModal() {
             document.getElementById('categoryListModal').style.display = 'none';
         }
+
+function openNoticeModal() {
+    var marqueeText = document.getElementById('ticker-text') ? document.getElementById('ticker-text').innerText : '';
+    document.getElementById('noticeInputText').value = marqueeText;
+    document.getElementById('noticeModal').style.display = 'block';
+}
+
+function closeNoticeModal() {
+    document.getElementById('noticeModal').style.display = 'none';
+}
+
+function saveNoticeTicker() {
+    var newNotice = document.getElementById('noticeInputText').value.trim();
+    if(!newNotice) {
+        alert("Please enter some text for notice!");
+        return;
+    }
+    
+    // Firebase database mein live save karein
+    if (typeof db !== 'undefined') {
+        db.ref('appConfig/noticeTicker').set(newNotice).then(function() {
+            alert("Notice Ticker Updated Successfully!");
+            closeNoticeModal();
+        }).catch(function(err) {
+            alert("Error: " + err.message);
+        });
+    } else {
+        // Local update test
+        if(document.getElementById('ticker-text')) {
+            document.getElementById('ticker-text').innerText = newNotice;
+        }
+        alert("Notice Ticker Updated!");
+        closeNoticeModal();
+    }
+}
         
     </script>
 </body>
