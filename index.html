@@ -119,15 +119,29 @@
 
     <div class="navbar">
         <h1>Kanwar Yatra 2026 District North-West Portal</h1>
-        <div class="admin-box">
-            <label style="cursor:pointer; display: flex; align-items: center; gap: 5px; font-weight: bold; color: #9a3412;">
-                <input type="checkbox" id="admin-mode" onchange="toggleAdminMode()"> 🔐 Admin Access
-            </label>
-            <button id="notice-btn" onclick="openNoticeModal()" class="btn btn-orange admin-only-view">📢 Update Notice Ticker</button>
-            <button id="config-slabs-btn" onclick="openSlabsConfigModal()" class="btn btn-dark" >🛠️ Configure Criteria Table Editor</button>
-            <button id="manage-noc-btn" onclick="openNocModal()" class="btn btn-purple" >⚙️ Global Config (NOC/Amenities)</button>
-            <button id="add-btn" onclick="openModal()" class="btn btn-green" >➕ Add New Samiti</button>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label style="background:#fef3c7; border:1px dashed #d97706; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; color:#78350f; display:flex; align-items:center; gap:5px;">
+        <input type="checkbox" id="adminToggle" onchange="toggleAdminMode(this.checked)"> 🔐 Admin Access
+        </label>
+    
+        <!-- Notice Update Button (Only visible in Admin Mode) -->
+     <button type="button" id="notice-btn" class="btn" onclick="openNoticeModal()" style="display:none; background:#ea580c; color:white; font-weight:bold;">
+        📢 Update Notice Ticker
+    </button>
+
+    <button type="button" class="admin-only btn btn-dark" onclick="openCriteriaModal()" style="display:none;">
+        🛠️ Configure Criteria Table Editor
+    </button>
+    
+    <button type="button" class="admin-only btn" onclick="openConfigModal()" style="display:none; background:#7c3aed; color:white;">
+        ⚙️ Global Config (NOC/Amenities)
+    </button>
+    
+    <button type="button" class="admin-only btn btn-green" onclick="openModal()" style="display:none;">
+        ➕ Add New Samiti
+    </button>
         </div>
+      
     </div>
 
     <!-- DYNAMIC SCROLLING NEWS TICKER -->
@@ -769,35 +783,39 @@
             }
         }
 
-        function toggleAdminMode() {
-            var checkEl = document.getElementById('admin-mode');
-            if (checkEl.checked) {
-                var pwd = prompt("Enter Master Admin Password:");
-                if (pwd === MASTER_PASSWORD) {
-                    isAdmin = true;
-                    document.body.classList.add('admin-active');
-                    alert("✅ Admin Access Granted! All Master Records Unlocked.");
-                } else {
-                    alert("❌ Incorrect Password!");
-                    checkEl.checked = false;
-                    isAdmin = false;
-                    document.body.classList.remove('admin-active');
-                }
-            } else {
-                isAdmin = false;
-                document.body.classList.remove('admin-active');
-                
-                var wrapper = document.getElementById('table-section-wrapper');
-                if (wrapper) wrapper.style.display = "none";
-                
-                var btn = document.getElementById('trigger-view-btn');
-                if (btn) btn.innerText = "📁 Open Master Portal Records (Click Here)";
-                
-                alert("🔒 Logged out from Admin Mode.");
-            }
-            renderAllComponents();
+    function toggleAdminMode(checked) {
+    if (checked) {
+        var pwd = prompt("Enter Master Password:");
+        if (pwd === MASTER_PASSWORD) {
+            isAdmin = true;
+            document.querySelectorAll('.admin-only').forEach(function(el) {
+                el.style.display = 'inline-block';
+            });
+            // Show Notice Button on Admin Login
+            var noticeBtn = document.getElementById('notice-btn');
+            if (noticeBtn) noticeBtn.style.display = 'inline-block';
+            
+            renderMasterTable(samitiList);
+            alert("Admin Mode Activated!");
+        } else {
+            alert("Incorrect Password!");
+            document.getElementById('adminToggle').checked = false;
+            isAdmin = false;
         }
+    } else {
+        isAdmin = false;
+        document.querySelectorAll('.admin-only').forEach(function(el) {
+            el.style.display = 'none';
+        });
+        // Hide Notice Button on Admin Logout
+        var noticeBtn = document.getElementById('notice-btn');
+        if (noticeBtn) noticeBtn.style.display = 'none';
+        
+        renderMasterTable(samitiList);
+    }
+}
 
+        
         function generateNextFileNumber() {
             if (samitiList.length === 0) return "NW-001";
             var maxNum = 0;
