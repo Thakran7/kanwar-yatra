@@ -359,33 +359,7 @@
         </div>
     </div>
 
-<!-- CATEGORY LIST POPUP MODAL -->
-    <div id="categoryListModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #ea580c; padding-bottom: 8px; margin-bottom: 15px;">
-                <h3 id="category-modal-title" style="margin:0; color:#ea580c;">Samiti List</h3>
-                <button type="button" onclick="closeCategoryModal()" class="btn btn-danger" style="padding: 2px 8px;">✕</button>
-            </div>
-            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-                <table style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">S.No.</th>
-                            <th>NW File No.</th>
-                            <th>Samiti Name</th>
-                        </tr>
-                    </thead>
-                    <tbody id="category-modal-tbody"></tbody>
-                </table>
-            </div>
-            <div style="text-align: right; margin-top: 15px;">
-                <button type="button" onclick="closeCategoryModal()" class="btn" style="background:#ccc; color:#333;">Close</button>
-            </div>
-        </div>
-    </div>
-
-
-    
+   
     <!-- CRITERIA TABLE EDITOR MODAL -->
     <div id="slabsConfigModal" class="modal">
         <div class="modal-content" style="max-width: 1000px;">
@@ -448,6 +422,32 @@
         </div>
     </div>
 
+    <!-- CATEGORY LIST POPUP MODAL -->
+    <div id="categoryListModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #ea580c; padding-bottom: 8px; margin-bottom: 15px;">
+                <h3 id="category-modal-title" style="margin:0; color:#ea580c;">Samiti List</h3>
+                <button type="button" onclick="closeCategoryModal()" class="btn btn-danger" style="padding: 2px 8px;">✕</button>
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">S.No.</th>
+                            <th>NW File No.</th>
+                            <th>Samiti Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-modal-tbody"></tbody>
+                </table>
+            </div>
+            <div style="text-align: right; margin-top: 15px;">
+                <button type="button" onclick="closeCategoryModal()" class="btn" style="background:#ccc; color:#333;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    
     <script>
         var firebaseConfig = {
             apiKey: "AIzaSyB2OQnBbkwzBABYdtXUo5rJtnN68L_GOzA",
