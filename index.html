@@ -170,10 +170,10 @@
         <!-- DYNAMIC GIA vs NOC BREAKDOWN BAR -->
         <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; gap: 15px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: #059669; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
+                <span onclick="openCategoryListModal('GIA')" style="background: #059669; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; user-select: none;">
                     💰 GIA Applicant Samitis: <span id="gia-count-badge">0</span>
                 </span>
-                <span style="background: #475569; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
+                <span onclick="openCategoryListModal('NOC')" style="background: #475569; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; user-select: none;">
                     📋 Only NOC Samitis: <span id="non-gia-count-badge">0</span>
                 </span>
             </div>
@@ -359,6 +359,33 @@
         </div>
     </div>
 
+<!-- CATEGORY LIST POPUP MODAL -->
+    <div id="categoryListModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #ea580c; padding-bottom: 8px; margin-bottom: 15px;">
+                <h3 id="category-modal-title" style="margin:0; color:#ea580c;">Samiti List</h3>
+                <button type="button" onclick="closeCategoryModal()" class="btn btn-danger" style="padding: 2px 8px;">✕</button>
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">S.No.</th>
+                            <th>NW File No.</th>
+                            <th>Samiti Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-modal-tbody"></tbody>
+                </table>
+            </div>
+            <div style="text-align: right; margin-top: 15px;">
+                <button type="button" onclick="closeCategoryModal()" class="btn" style="background:#ccc; color:#333;">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    
     <!-- CRITERIA TABLE EDITOR MODAL -->
     <div id="slabsConfigModal" class="modal">
         <div class="modal-content" style="max-width: 1000px;">
@@ -1196,6 +1223,46 @@
             XLSX.utils.book_append_sheet(workbook, worksheet, "Master Sheet");
             XLSX.writeFile(workbook, "Kanwar_Samiti_Comprehensive_Report.xlsx");
         }
+function openCategoryListModal(type) {
+            var tbody = document.getElementById('category-modal-tbody');
+            var titleEl = document.getElementById('category-modal-title');
+            tbody.innerHTML = '';
+
+            var filtered = samitiList.filter(function(s) {
+                if (type === 'GIA') {
+                    return s.category_type === 'GIA' || Number(s.gia || 0) > 0;
+                } else {
+                    return s.category_type === 'NOC' && Number(s.gia || 0) === 0;
+                }
+            });
+
+            if (type === 'GIA') {
+                titleEl.innerText = "💰 GIA Applicant Samitis List (" + filtered.length + ")";
+            } else {
+                titleEl.innerText = "📋 Only NOC Samitis List (" + filtered.length + ")";
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888; padding:15px;">No records found.</td></tr>`;
+            } else {
+                var html = '';
+                filtered.forEach(function(s, idx) {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td><b>${s.nw_file || '-'}</b></td>
+                        <td><b>${s.name || '-'}</b></td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            }
+
+            document.getElementById('categoryListModal').style.display = 'block';
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryListModal').style.display = 'none';
+        }
+        
     </script>
 </body>
 </html>
