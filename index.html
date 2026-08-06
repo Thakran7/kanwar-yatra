@@ -1223,7 +1223,8 @@
             XLSX.utils.book_append_sheet(workbook, worksheet, "Master Sheet");
             XLSX.writeFile(workbook, "Kanwar_Samiti_Comprehensive_Report.xlsx");
         }
-function openCategoryListModal(type) {
+
+        function openCategoryListModal(type) {
             var tbody = document.getElementById('category-modal-tbody');
             var titleEl = document.getElementById('category-modal-title');
             tbody.innerHTML = '';
