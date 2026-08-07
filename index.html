@@ -23,6 +23,7 @@
         .btn-purple { background-color: #7c3aed; color: white; }
         .btn-dark { background-color: #1e293b; color: white; }
         .btn-danger { background-color: #dc2626; color: white; }
+        .btn-nodal { background-color: #0284c7; color: white; }
         
         .container { max-width: 1600px; margin: 25px auto; padding: 0 20px; }
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -120,6 +121,10 @@
     <div class="navbar">
         <h1>Kanwar Yatra 2026 District North-West Portal</h1>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-nodal" onclick="openNodalOfficerModal()">
+                📞 Nodal Officers Directory
+            </button>
+
             <label style="background:#fef3c7; border:1px dashed #d97706; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; color:#78350f; display:flex; align-items:center; gap:5px;">
                 <input type="checkbox" id="adminToggle" onchange="toggleAdminMode(this.checked)"> 🔐 Admin Access
             </label>
@@ -237,6 +242,67 @@
                     <thead><tr id="table-header-row"></tr></thead>
                     <tbody id="table-body"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- NODAL OFFICERS DIRECTORY MODAL -->
+    <div id="nodalOfficerModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="margin:0; color:#0284c7;">📞 Nodal Officers Directory (DDA, MCD, DUSIB, etc.)</h3>
+                <button type="button" onclick="closeNodalOfficerModal()" class="btn btn-danger" style="padding: 2px 8px;">✕</button>
+            </div>
+
+            <!-- Admin Add / Edit Form -->
+            <div class="admin-only-view" style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <h4 id="nodal-form-title" style="margin: 0 0 10px 0; color: #0369a1;">➕ Add New Nodal Officer</h4>
+                <form id="nodalForm" onsubmit="saveNodalOfficer(event)">
+                    <input type="hidden" id="nodal-edit-id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Department Name*</label>
+                            <input type="text" id="nodal-dept" placeholder="e.g. DDA, MCD, DUSIB, Fire" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Officer Name*</label>
+                            <input type="text" id="nodal-name" placeholder="e.g. Sh. Rajesh Kumar" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Designation*</label>
+                            <input type="text" id="nodal-desig" placeholder="e.g. Executive Engineer" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone / Mobile No.*</label>
+                            <input type="tel" id="nodal-phone" placeholder="10 Digit Mobile No." required>
+                        </div>
+                    </div>
+                    <div style="text-align: right; margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
+                        <button type="button" onclick="resetNodalForm()" class="btn" style="background:#ccc; color:#333;">Reset</button>
+                        <button type="submit" class="btn btn-green">💾 Save Officer</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Public View Table -->
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">S.No.</th>
+                            <th>Department</th>
+                            <th>Officer Name</th>
+                            <th>Designation</th>
+                            <th>Phone Number</th>
+                            <th class="admin-only-col" style="text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nodal-officers-tbody"></tbody>
+                </table>
+            </div>
+
+            <div style="text-align: right; margin-top: 15px;">
+                <button type="button" onclick="closeNodalOfficerModal()" class="btn" style="background:#ccc; color:#333;">Close</button>
             </div>
         </div>
     </div>
@@ -477,9 +543,11 @@
         var checklistDb = firebase.database().ref("camp_checklist_global_v9");
         var slabsConfigDb = firebase.database().ref("slabs_table_matrix_setup_v9");
         var noticeDb = firebase.database().ref("public_notice_ticker_v9");
+        var nodalDb = firebase.database().ref("nodal_officers_list_v9");
 
         var MASTER_PASSWORD = "delhi2026";
         var samitiList = [];
+        var nodalOfficersList = [];
         var nocDepartments = {};
         var checklistItems = {};
         var activeTab = 'noc'; 
@@ -493,6 +561,20 @@
             if (tickerEl) {
                 tickerEl.innerText = text ? text : "• Welcome to District Kanwar Yatra Management Portal 2026.";
             }
+        });
+
+        // Firebase Live Nodal Officers Reader
+        nodalDb.on("value", function(snapshot) {
+            var data = snapshot.val();
+            nodalOfficersList = [];
+            if (data) {
+                for (var key in data) {
+                    var item = data[key];
+                    item.fbKey = key;
+                    nodalOfficersList.push(item);
+                }
+            }
+            renderNodalOfficersTable();
         });
 
         function openNoticeModal() {
@@ -517,6 +599,104 @@
             }).catch(function(error) {
                 alert("❌ Error updating notice: " + error.message);
             });
+        }
+
+        /* Nodal Officers Directory Functions */
+        function openNodalOfficerModal() {
+            resetNodalForm();
+            renderNodalOfficersTable();
+            document.getElementById('nodalOfficerModal').style.display = 'block';
+        }
+
+        function closeNodalOfficerModal() {
+            document.getElementById('nodalOfficerModal').style.display = 'none';
+        }
+
+        function resetNodalForm() {
+            document.getElementById('nodalForm').reset();
+            document.getElementById('nodal-edit-id').value = '';
+            document.getElementById('nodal-form-title').innerText = "➕ Add New Nodal Officer";
+        }
+
+        function saveNodalOfficer(e) {
+            e.preventDefault();
+            if (!isAdmin) {
+                alert("⛔ Permission Denied: Only Admin can add or edit Nodal Officers.");
+                return;
+            }
+            var key = document.getElementById('nodal-edit-id').value;
+            var payload = {
+                dept: document.getElementById('nodal-dept').value.trim(),
+                name: document.getElementById('nodal-name').value.trim(),
+                desig: document.getElementById('nodal-desig').value.trim(),
+                phone: document.getElementById('nodal-phone').value.trim()
+            };
+
+            if (key) {
+                nodalDb.child(key).set(payload).then(function() {
+                    alert("✅ Nodal Officer details updated successfully!");
+                    resetNodalForm();
+                }).catch(function(err) {
+                    alert("❌ Error updating: " + err.message);
+                });
+            } else {
+                nodalDb.push(payload).then(function() {
+                    alert("✅ Nodal Officer added successfully!");
+                    resetNodalForm();
+                }).catch(function(err) {
+                    alert("❌ Error adding: " + err.message);
+                });
+            }
+        }
+
+        function editNodalOfficer(key) {
+            var item = nodalOfficersList.find(i => i.fbKey === key);
+            if (!item) return;
+            document.getElementById('nodal-edit-id').value = item.fbKey;
+            document.getElementById('nodal-dept').value = item.dept || '';
+            document.getElementById('nodal-name').value = item.name || '';
+            document.getElementById('nodal-desig').value = item.desig || '';
+            document.getElementById('nodal-phone').value = item.phone || '';
+            document.getElementById('nodal-form-title').innerText = "✏️ Edit Nodal Officer Record";
+        }
+
+        function deleteNodalOfficer(key) {
+            if (!isAdmin) return;
+            if (confirm("Are you sure you want to delete this Nodal Officer entry?")) {
+                nodalDb.child(key).remove();
+            }
+        }
+
+        function renderNodalOfficersTable() {
+            var tbody = document.getElementById('nodal-officers-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (nodalOfficersList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center; color:#888; padding:15px;">No Nodal Officers added yet.</td></tr>`;
+                return;
+            }
+
+            var html = '';
+            nodalOfficersList.forEach(function(item, idx) {
+                var phoneCallBtn = item.phone ? `<a href="tel:${item.phone}" style="color:#0284c7; font-weight:bold; text-decoration:none;">📞 ${item.phone}</a>` : '-';
+                
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td><b>${item.dept || '-'}</b></td>
+                    <td><b>${item.name || '-'}</b></td>
+                    <td>${item.desig || '-'}</td>
+                    <td>${phoneCallBtn}</td>`;
+
+                if (isAdmin) {
+                    html += `<td style="text-align:center;">
+                        <button type="button" class="btn btn-blue btn-action" onclick="editNodalOfficer('${item.fbKey}')">✏️ Edit</button>
+                        <button type="button" class="btn btn-danger btn-action" onclick="deleteNodalOfficer('${item.fbKey}')">🗑️</button>
+                    </td>`;
+                }
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
         var currentSlabsMatrix = [
@@ -790,11 +970,13 @@
                     
                     document.querySelectorAll('.admin-only').forEach(function(el) { el.style.display = 'inline-block'; });
                     document.querySelectorAll('.admin-only-view').forEach(function(el) { el.style.display = 'block'; });
+                    document.querySelectorAll('.admin-only-col').forEach(function(el) { el.style.display = 'table-cell'; });
                     
                     var noticeBtn = document.getElementById('notice-btn');
                     if (noticeBtn) noticeBtn.style.display = 'inline-block';
                     
                     renderAllComponents();
+                    renderNodalOfficersTable();
                     alert("Admin Mode Activated!");
                 } else {
                     alert("Incorrect Password!");
@@ -807,11 +989,13 @@
                 
                 document.querySelectorAll('.admin-only').forEach(function(el) { el.style.display = 'none'; });
                 document.querySelectorAll('.admin-only-view').forEach(function(el) { el.style.display = 'none'; });
+                document.querySelectorAll('.admin-only-col').forEach(function(el) { el.style.display = 'none'; });
                 
                 var noticeBtn = document.getElementById('notice-btn');
                 if (noticeBtn) noticeBtn.style.display = 'none';
                 
                 renderAllComponents();
+                renderNodalOfficersTable();
             }
         }
 
